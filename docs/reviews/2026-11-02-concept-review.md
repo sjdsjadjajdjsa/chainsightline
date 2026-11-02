@@ -21,7 +21,7 @@ These scores evaluate the current proposal, not a functioning or validated produ
 
 ## What is especially good
 
-- **Evidence before AI.** Deterministic observations remain useful if Kimi is unavailable.
+- **Evidence before AI.** Deterministic observations remain useful if the configured model is unavailable.
 - **No universal guilt score.** Signals describe observed patterns and possible benign explanations.
 - **Canonical, bounded evidence.** Finalized block identity, pagination and partial coverage avoid common false-confidence failures.
 - **Realistic first infrastructure.** TypeScript, PostgreSQL and one worker are enough for the initial product.

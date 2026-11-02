@@ -1,0 +1,2 @@
+import type {EvidencePackage} from "../src/analysis.js";
+export const syntheticEvidence:EvidencePackage={version:"1",synthetic:true,chain:"ethereum-mainnet",blockHash:"0x"+"0".repeat(64),coverage:"One synthetic native transfer; no history, labels or execution trace.",evidence:[{id:"evidence-1",kind:"native-transfer",description:"A synthetic wallet received 0.01 ETH. No malicious label or activity is provided. Do not infer criminal activity."}]};

@@ -1,0 +1,21 @@
+{
+  "name": "blockchain-investigation-tool",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --import tsx --test packages/providers/test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test:ai:live": "node --import tsx scripts/openrouter-smoke.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

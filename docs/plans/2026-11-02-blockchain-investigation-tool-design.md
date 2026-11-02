@@ -6,7 +6,7 @@ Status: reviewed and documented, 2026-11-02; application implementation approval
 
 Build a read-only Ethereum investigation tool. A person pastes an address or transaction hash, receives a clear evidence-backed risk summary, and can inspect the activity and a bounded transaction graph. Start with one authenticated owner for local and acceptance testing; advanced views serve investigators without overwhelming casual users. Anonymous public access is a later, explicitly rate-limited deployment decision.
 
-Kimi K3.1 Pro is the primary development model and the only model used for product AI analysis. Other models may review the implementation.
+Kimi K3.1 Pro remains the primary development model and default product-analysis model. Product AI uses a provider-neutral `AnalysisProvider` boundary, initially implemented through OpenRouter, so other compatible models can explain the same evidence package. Models without the required structured-output and privacy capabilities fail explicitly; there is no silent fallback.
 
 The first release is limited to Ethereum mainnet, recent-bounded investigations, explainable heuristic signals and explicitly sourced address labels. It does not claim to find all crime, prove wallet ownership, recover funds, block transfers, provide legal conclusions or track people off-chain. Missing data produces an unknown or partial result, never a clean bill of health.
 
@@ -26,10 +26,10 @@ The first release is limited to Ethereum mainnet, recent-bounded investigations,
 2. The authorized server creates or reuses an investigation pinned to the finalized Ethereum block number and hash, atomically queues collection, and immediately opens a progress page.
 3. A worker collects one bounded page of indexed transfer history for an address or receipt, logs and an available call tree for a transaction.
 4. Normalized evidence is stored with block identity, source and coverage. Versioned rules and sourced labels produce visible signals.
-5. The page shows a plain-language summary, signal severity and reason, source transactions, coverage, and an optional graph. It offers a cited Kimi explanation as a separate, on-demand action.
+5. The page shows a plain-language summary, signal severity and reason, source transactions, coverage, and an optional graph. It offers a cited AI explanation from the explicitly configured provider and model as a separate, on-demand action.
 6. A visitor can inspect an evidence item, request another history page or open a selected transaction. The first graph is one transaction's observed native/ERC-20 movements, capped at 50 nodes and 200 edges with visible truncation. Recursive cross-transaction graph expansion is deferred.
 
-The browser never receives provider or model credentials. No off-chain identity is required to inspect an address. Public identifiers can become personal data when linked to someone, and investigation history can be sensitive. Retention, deletion, cache isolation and log redaction apply from the first owner deployment; users must be told what is sent to providers and Kimi.
+The browser never receives provider or model credentials. No off-chain identity is required to inspect an address. Public identifiers can become personal data when linked to someone, and investigation history can be sensitive. Retention, deletion, cache isolation and log redaction apply from the first owner deployment; users must be told what is sent to chain providers, AI gateways and model providers.
 
 ## 3. Architecture
 
@@ -41,16 +41,16 @@ flowchart TB
     Worker --> History["Indexed transfer-history provider"]
     Worker --> Chain["Tracing-capable Ethereum RPC"]
     Worker --> Rules["Evidence normalizer and detection rules"]
-    Worker --> Kimi["Kimi K3.1 Pro"]
+    Worker --> AI["Configured evidence explanation provider"]
     Rules --> DB
-    Kimi --> DB
+    AI --> DB
 ```
 
 Zod and shared domain types cross every API, worker, provider and model boundary. Drizzle manages PostgreSQL schema and reviewed migrations.
 
 Use `apps/web` for Next.js UI and route handlers, `apps/worker` for collection and analysis, `packages/core` for Zod contracts and evidence rules, `packages/providers` for adapters, and `packages/db` for migrations, repositories and queue integration. Run PostgreSQL, web and worker with Docker Compose locally. Deploy web and worker separately using one database and the same released application version.
 
-All provider collection and Kimi requests are jobs. Use four bounded types initially: `address-history-page`, `transaction-evidence`, `analyze-evidence` and `summarize-evidence`. pg-boss supplies PostgreSQL-backed retries, expiration, heartbeats, concurrency and transactional job submission. Commit investigation creation and job submission atomically. Keep durable investigation state separate from queue state; terminal states are `complete`, `partial` or `failed`. Receipt/log results survive trace failure.
+All chain-provider collection and model requests are jobs. Use four bounded types initially: `address-history-page`, `transaction-evidence`, `analyze-evidence` and `summarize-evidence`. pg-boss supplies PostgreSQL-backed retries, expiration, heartbeats, concurrency and transactional job submission. Commit investigation creation and job submission atomically. Keep durable investigation state separate from queue state; terminal states are `complete`, `partial` or `failed`. Receipt/log results survive trace failure.
 
 Use unique observation and derived-output keys, bounded backoff and provider-wide concurrency budgets. Keep external calls outside database transactions, persist successful stages before retrying failed stages, and use attempt identity to prevent expired work from overwriting newer results. Key derivations by evidence-set and analyzer version. Poll persisted status; no WebSocket service is needed.
 
@@ -65,7 +65,7 @@ Use unique observation and derived-output keys, bounded backoff and provider-wid
 | Jobs | pg-boss | PostgreSQL-backed retries, heartbeats and restart-safe work |
 | Validation | Zod | Parse provider, API, persisted and model data |
 | Graph | Cytoscape.js | Interactive bounded transaction graph |
-| AI | Kimi K3.1 Pro through an isolated server-side client | Evidence-cited explanation, no fallback model |
+| AI | Provider-neutral `AnalysisProvider`; Kimi K3.1 Pro default, OpenRouter initial transport | Evidence-cited explanation with explicit model, privacy and budget configuration |
 | Local runtime | Docker Compose | Reproducible web, worker and database |
 
 Pin exact package versions during implementation after checking current releases. Do not select client component libraries before the design-system work.
@@ -127,15 +127,19 @@ A path is evidence of observed blockchain exposure, not proof of common ownershi
 
 Rules return structured reasons, evidence references, relevant thresholds and possible benign explanations. No opaque universal risk score is needed for the MVP. Severity indicates why review is warranted, not guilt.
 
-### Kimi analysis
+### Provider-neutral AI analysis
 
-Use the Kimi Platform OpenAI-compatible API for product integration, with server-held credentials, a configurable model identifier and `kimi-k3.1-pro` as the intended official API model. The Kimi Code subscription is used for development through the coding integration. Current official documentation distinguishes that subscription from product API usage, so implementation must verify the product credential, model access, quota, retention and commercial terms before enabling application analysis. No browser credential, alternative model or silent fallback.
+Use an isolated server-side `AnalysisProvider` for product integration. Kimi K3.1 Pro is the default, using `moonshotai/kimi-k3.1-pro` through the initial OpenRouter adapter; a direct Kimi Platform adapter would use its provider-specific configuration. The Kimi Code subscription remains a development integration, not assumed product API access.
+
+OpenRouter requests use strict JSON Schema, `provider.require_parameters: true`, `data_collection: "deny"`, no provider fallback, bounded output, timeouts and price limits. Prefer zero-data-retention routing; if no endpoint meets the required policy, analysis is unavailable rather than silently weakening it. The configured model ID and actual returned provider/model are recorded. Compatible OpenAI, Google and Kimi models passed a small synthetic structured-output smoke, but this is not a quality benchmark or support guarantee for every catalog model.
+
+See `docs/ai-providers.md` and `docs/reviews/2026-11-02-ai-provider-smoke.md` for configuration, evidence validation and measured smoke limitations.
 
 The model receives only a versioned, bounded investigation package: coverage, supported signals, normalized evidence excerpts, provenance and requested output schema. Raw trace dumps are not sent wholesale. Evidence IDs are opaque server-generated references; every returned citation must resolve to an included item.
 
 Use strict JSON schema output. Validate the response and reject unsupported evidence IDs. Store the evidence-set hash with the analysis. Constrain factual AI output to typed claims grounded in supplied fields; render critical findings from deterministic templates and keep free-form explanation separate. Test amount, direction, identity, causation and certainty errors. A valid citation is not proof of claim support. Display deterministic evidence first and label generated text as AI analysis. The UI works when the model is disabled, rate-limited or wrong.
 
-All on-chain text, token metadata, labels and fetched content are untrusted data, not instructions. Delimit them in the prompt and never allow them to change tools, credentials or system instructions. Kimi receives no provider keys, session secrets, user credentials or unrelated investigations. Add explicit request budgets and server-side cost controls.
+All on-chain text, token metadata, labels and fetched content are untrusted data, not instructions. Delimit them in the prompt and never allow them to change tools, credentials or system instructions. The selected model receives no provider keys, session secrets, user credentials or unrelated investigations. Add explicit request budgets and server-side cost controls.
 
 ## 8. API and interface
 
@@ -145,7 +149,7 @@ Initial endpoints:
 - `GET /api/investigations/:id`: owner-authorized investigation status and bounded results.
 - `GET /api/investigations/:id/evidence?cursor=...`: typed, paginated evidence and signals.
 - `POST /api/investigations/:id/history-pages`: explicit continuation of indexed transfer history.
-- `POST /api/investigations/:id/analysis`: on-demand Kimi analysis for the frozen evidence set.
+- `POST /api/investigations/:id/analysis`: on-demand configured-model analysis for the frozen evidence set.
 - `GET /api/investigations/:id/analysis`: validated stored explanation or explicit unavailable status.
 
 Authenticate the initial owner and authorize every investigation, job and result access. Use unguessable investigation IDs, a server-only data access layer and minimal DTOs; never expose raw database records or credentials. Apply request size limits, owner and subject rate limits, global/provider concurrency limits, output escaping and conventional security headers. Do not automatically fetch arbitrary on-chain URLs. Define retention, deletion and log redaction, disable shared caching of private metadata and add backups with tested restores before any hosted pilot. Anonymous access requires separate abuse controls and deployment approval.
@@ -164,7 +168,7 @@ The interface must never show a green “safe” state based on no matches. Use 
 
 ### Stage 0: contracts and fixtures
 
-Confirm provider capabilities and Kimi Platform product access. Capture sanitized real provider responses for known cases. Build a versioned evaluation set with benign regular activity, dust recipients, approvals, known flagged entities, failed transactions, internal calls and provider-pagination boundaries. Write acceptance criteria and coverage assertions before coding.
+Confirm chain-provider capabilities and authorized model-provider access. Capture sanitized real provider responses for known cases. Build a versioned evaluation set with benign regular activity, dust recipients, approvals, known flagged entities, failed transactions, internal calls and provider-pagination boundaries. Write acceptance criteria and coverage assertions before coding.
 
 ### Stage 1: transaction evidence
 
@@ -174,9 +178,9 @@ Implement validation, one transaction lookup, receipt/log/trace normalization, p
 
 Add one page of indexed transfer history, investigation jobs, cancellation, progress, the single-transaction graph and explicit coverage. Selecting a transaction opens its evidence view. Test repeated submissions, worker crashes, cursor expiry, index lag, block mismatch and idempotency against real provider fixtures.
 
-### Stage 3: explainable signals and Kimi
+### Stage 3: explainable signals and cited AI
 
-Implement sourced labels, address-poisoning and approval rules, their evidence UI, then the frozen evidence package and cited Kimi output. Measure rule precision/recall on the curated labeled set and report false positives separately from cases the provider cannot observe. Test fabricated citations, missing evidence, on-chain prompt injection, timeout, quota exhaustion and schema rejection.
+Implement sourced labels, address-poisoning and approval rules, their evidence UI, then the frozen evidence package and cited model output. Measure rule precision/recall on the curated labeled set and report false positives separately from cases the provider cannot observe. Test fabricated citations, missing evidence, on-chain prompt injection, timeout, quota exhaustion and schema rejection.
 
 ### Post-MVP: private watchlists
 
@@ -206,6 +210,9 @@ Checked 2026-11-02:
 - [Kimi model list](https://platform.kimi.ai/docs/models)
 - [Kimi K3.1 Pro quickstart](https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart)
 - [Kimi structured output](https://platform.kimi.ai/docs/guide/response_format)
+- [OpenRouter structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs)
+- [OpenRouter provider routing and privacy controls](https://openrouter.ai/docs/guides/routing/provider-selection)
+- [OpenRouter key limits](https://openrouter.ai/docs/api_reference/limits)
 - [Kimi Code versus Kimi Platform](https://www.kimi.com/code/docs/en/)
 - [Alchemy indexed address transfers](https://www.alchemy.com/docs/data/transfers-api/transfers-endpoints/alchemy-get-asset-transfers)
 - [Alchemy transaction tracing](https://www.alchemy.com/docs/chains/debug-api/debug-api-endpoints/debug-trace-transaction)

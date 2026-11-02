@@ -6,10 +6,10 @@
 
 **Evidence-first Ethereum investigations, explained clearly.**
 
-A planned read-only workspace for examining transactions, understanding risk signals and tracing observed asset movements. Deterministic analysis comes first; Kimi K3.1 Pro explains the evidence with citations.
+A read-only workspace being built for examining transactions, understanding risk signals and tracing observed asset movements. Deterministic analysis comes first; an explicitly configured AI model explains the evidence with citations.
 
 > [!IMPORTANT]
-> **Design stage.** No runnable application or live blockchain integration exists yet. The diagrams below describe the planned product, not implemented or benchmarked capabilities.
+> **Early development.** A tested model-provider contract and OpenRouter adapter exist, but there is no application UI or live blockchain integration yet. Diagrams describe the planned product, not implemented detection capabilities.
 
 ## Why Blocktrace?
 
@@ -32,7 +32,7 @@ flowchart LR
     B --> C["Receipts, logs and call traces"]
     C --> D["Versioned rules and sourced labels"]
     D --> E["Evidence and movement graph"]
-    E --> F["Optional cited Kimi explanation"]
+    E --> F["Optional cited AI explanation"]
 
     style A fill:#dcefeb,stroke:#3c8d94,color:#10272d
     style B fill:#dcefeb,stroke:#3c8d94,color:#10272d
@@ -48,7 +48,7 @@ flowchart LR
 | --- | --- |
 | Evidence before conclusions | Every signal links to source observations and coverage. |
 | Honest uncertainty | Missing traces, unsupported activity and partial history stay visible. |
-| AI with boundaries | Kimi summarizes a frozen evidence bundle; it cannot invent transactions or verdicts. |
+| AI with boundaries | A configured compatible model summarizes a frozen evidence bundle; validation rejects invented citations. |
 | Small, measurable scope | Ethereum first. No full-chain indexing or cross-chain claims in the MVP. |
 | Read-only by design | No wallet signing, transaction submission or automated fund blocking. |
 
@@ -62,9 +62,9 @@ flowchart TB
     Worker --> History["Indexed transfer-history provider"]
     Worker --> Chain["Tracing-capable Ethereum RPC"]
     Worker --> Rules["Evidence normalizer and detection rules"]
-    Worker --> Kimi["Kimi K3.1 Pro"]
+    Worker --> AI["Configured evidence explanation provider"]
     Rules --> DB
-    Kimi --> DB
+    AI --> DB
 ```
 
 **Planned architecture; no deployed infrastructure yet.**
@@ -78,20 +78,21 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | Architecture and repository | Reviewed design, private repository and project guidance | Complete |
+| AI provider contract | Model-neutral evidence schema, OpenRouter adapter and offline tests | Initial slice complete |
 | TypeScript foundation | Workspace, database, authentication, jobs and CI | Not started |
 | Offline transaction evidence | Synthetic fixtures, normalization and evidence interface | Not started |
 | Live Ethereum investigation | Provider-backed transaction and bounded address history | Not started |
 | Signals and graph | Explainable rules and single-transaction movement graph | Not started |
-| Cited AI analysis | Kimi summaries over frozen evidence | Not started |
+| Cited AI analysis | Configurable model summaries over frozen evidence | Adapter smoke tested |
 | Private preview | Security, recovery, evaluation and cost verification | Not started |
 
 The detailed [delivery roadmap](docs/plans/2026-11-02-github-roadmap.md) tracks GitHub setup and release gates. The [concept review](docs/reviews/2026-11-02-concept-review.md) records strengths, weaknesses and improvement priorities.
 
 ## Development and model access
 
-Application setup and verification commands will arrive with the TypeScript foundation. `.env.example` contains placeholders only; real environment files are ignored by Git.
+The first standalone TypeScript provider slice is testable with `npm ci`, `npm test` and `npm run typecheck`. The full application setup will arrive with the workspace foundation. Real environment files are ignored by Git.
 
-Kimi K3.1 Pro is the primary development model and intended product-analysis model. Application inference needs separate authorized **Kimi Platform API** access; a Kimi Code subscription is not assumed to provide it.
+Kimi K3.1 Pro remains the primary development model and default product-analysis model. OpenRouter provides the initial provider-neutral transport; Kimi, OpenAI and Google models passed a small synthetic structured-output compatibility test. Compatible models are supported, not every possible model. No silent fallback or automatic weakening of privacy settings. See [AI provider configuration](docs/ai-providers.md) and the [measured smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md).
 
 ## Security and release
 
@@ -101,4 +102,4 @@ No license has been selected. Reuse and redistribution are not currently granted
 
 ---
 
-*Blocktrace is a working project name. The repository is named `blockchain` during early development.*
+*Blocktrace is a temporary presentation name. The repository stays `blockchain` while a distinct public identity is selected; an existing blockchain tracing company already uses the BlockTrace name.*

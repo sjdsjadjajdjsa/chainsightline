@@ -32,7 +32,7 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 
 - Select an Ethereum indexed-transfer-history and historical call-tracing provider. Alchemy is the current candidate, not an authenticated choice.
 - Verify account plan, quotas, historical range, supported transfer categories, pagination, index freshness, retention and commercial terms with real fixtures.
-- Create a separate Kimi Platform application credential and verify `kimi-k3.1-pro` access, quotas, retention and costs. Kimi Code subscription access covers development, not automatically product inference.
+- **Done, initial smoke:** verified OpenRouter model ID `moonshotai/kimi-k3.1-pro` and structured evidence responses from Kimi, OpenAI and Google using synthetic data and a tightly capped key. This is compatibility, not detection-quality validation. Direct Kimi Platform access remains optional and unverified; Kimi Code subscription access covers development, not automatically product inference.
 - Start with no live dependency: define capability contracts, fixture schemas, budgets, error types and clearly marked synthetic examples. Add schema-validated captured fixtures only after credentials and redistribution terms are checked. Keep live-provider smoke tests separate from normal CI.
 - Give every fixture provenance, block/transaction identity, provider method, capture time, normalization version, expected coverage and redistribution status. Sanitize request URLs, headers and error bodies as well as credential fields. Never present synthetic results as live-provider validation.
 
@@ -43,7 +43,7 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 - Show transaction facts, raw evidence and a single-transaction native/ERC-20 graph with a 50-node/200-edge display cap.
 - Add one bounded page of indexed address transfer history; selecting a transaction opens its evidence view.
 - Add sourced labels, possible-address-poisoning and approval-exposure signals. Show uncertainty and benign explanations, not unsupported accusations.
-- Add on-demand Kimi summaries over a frozen evidence bundle with strict schema validation and citations. Deterministic evidence remains available if Kimi is disabled.
+- Add on-demand configured-model summaries over a frozen evidence bundle with strict schema validation and citations. Deterministic evidence remains available if AI is disabled. Initial provider contract and OpenRouter adapter are implemented; full investigation packages and claim-grounding evaluation remain.
 
 ## 5. Verification and operations
 
@@ -56,7 +56,7 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 ## 6. GitHub automation and security
 
 - GitHub Actions: install with the committed pnpm lockfile, typecheck, lint, unit/contract tests, database integration tests and production build on pull requests and the default branch. Use read-only default permissions, job timeouts and restricted artifact retention. Never run untrusted pull-request code in a privileged `pull_request_target` workflow.
-- Keep live-provider and paid Kimi tests out of untrusted pull requests. Run them only in controlled environments with limited secrets and budgets.
+- Keep live-chain and paid model tests out of untrusted pull requests. Run them only in controlled environments with limited secrets and budgets.
 - Generate and review `.github/workflows/actions.lock` with `gh actions-lock` to pin action dependencies, including transitive actions. Pin reusable-workflow calls by full commit SHA because the lockfile does not cover them. Use minimal workflow permissions and separate release credentials from CI.
 - Add `.github/dependabot.yml` for pnpm, Docker and GitHub Actions updates; group routine updates and require CI.
 - Enable secret scanning and push protection where the selected private-repository plan supports them. GitHub currently limits private-repository availability by ownership and GitHub Secret Protection eligibility; user-level push protection only covers pushes to public repositories. Otherwise use suitable standalone scanners in CI.
@@ -77,7 +77,7 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 1. **Foundation:** repository, workspace, database, CI, documentation and fixtures.
 2. **Transaction evidence:** real provider evidence, finalized anchor and evidence UI.
 3. **Address investigation:** bounded transfer history, jobs and movement graph.
-4. **Signals and Kimi:** explainable rules, cited summaries and evaluation results.
+4. **Signals and cited AI:** explainable rules, provider-neutral summaries and evaluation results.
 5. **Private preview:** security, operations, cost controls and recovery verification.
 6. **Post-MVP:** recursive tracing, owner-scoped watchlists, reorg-aware alerts and additional chains.
 
@@ -85,8 +85,8 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 
 1. Approve the TypeScript foundation and offline transaction evidence milestone.
 2. Build the workspace, synthetic fixtures, evidence contracts and browser acceptance tests without paid calls.
-3. Connect cj's provider and Kimi Platform accounts in server-side local configuration.
+3. Connect cj's chain provider and chosen model provider in server-side local configuration.
 4. Verify the live transaction slice, then add bounded address history and the movement graph.
-5. Evaluate detection and cited Kimi summaries before considering public deployment.
+5. Evaluate detection and cited model summaries before considering public deployment.
 
-`Blocktrace` is the working presentation name. Public naming, licensing and visibility remain separate decisions.
+`Blocktrace` is a temporary presentation name, not a recommended final identity: an existing blockchain tracing company uses that name. Keep the `blockchain` repository slug until a distinct public identity and clearance are agreed. Naming, licensing and visibility remain separate decisions.
