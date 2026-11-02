@@ -1,6 +1,6 @@
 # Blockchain investigation tool design
 
-Status: proposed, 2026-11-02
+Status: reviewed and documented, 2026-11-02; application implementation approval pending
 
 ## 1. Purpose and scope
 
@@ -29,28 +29,24 @@ The first release is limited to Ethereum mainnet, recent-bounded investigations,
 5. The page shows a plain-language summary, signal severity and reason, source transactions, coverage, and an optional graph. It offers a cited Kimi explanation as a separate, on-demand action.
 6. A visitor can inspect an evidence item, request another history page or open a selected transaction. The first graph is one transaction's observed native/ERC-20 movements, capped at 50 nodes and 200 edges with visible truncation. Recursive cross-transaction graph expansion is deferred.
 
-The browser never receives provider or model credentials. The system never treats public identifiers as private identity information or requires an off-chain identity to investigate an address.
+The browser never receives provider or model credentials. No off-chain identity is required to inspect an address. Public identifiers can become personal data when linked to someone, and investigation history can be sensitive. Retention, deletion, cache isolation and log redaction apply from the first owner deployment; users must be told what is sent to providers and Kimi.
 
 ## 3. Architecture
 
-```text
-Next.js / React browser
-        |
-        v
-Next.js route handlers ------> PostgreSQL
-        |                         evidence, signals, investigations, jobs
-        v
-pg-boss / TypeScript worker
-        |
-        +-- HistoryProvider: indexed, paginated address history
-        +-- ChainProvider: transaction, receipt, logs and execution traces
-        +-- Evidence normalizer -> versioned rules and sourced labels
-        +-- Investigation assembler -> KimiClient
-        +-- Graph builder: explicit, budgeted expansions
-
-Zod and shared domain types cross every API, worker, provider and model boundary.
-Drizzle manages PostgreSQL schema and reviewed migrations.
+```mermaid
+flowchart TB
+    UI["Next.js investigation interface"] --> API["Server API"]
+    API --> DB[("PostgreSQL evidence and jobs")]
+    API --> Worker["Durable TypeScript worker"]
+    Worker --> History["Indexed transfer-history provider"]
+    Worker --> Chain["Tracing-capable Ethereum RPC"]
+    Worker --> Rules["Evidence normalizer and detection rules"]
+    Worker --> Kimi["Kimi K3.1 Pro"]
+    Rules --> DB
+    Kimi --> DB
 ```
+
+Zod and shared domain types cross every API, worker, provider and model boundary. Drizzle manages PostgreSQL schema and reviewed migrations.
 
 Use `apps/web` for Next.js UI and route handlers, `apps/worker` for collection and analysis, `packages/core` for Zod contracts and evidence rules, `packages/providers` for adapters, and `packages/db` for migrations, repositories and queue integration. Run PostgreSQL, web and worker with Docker Compose locally. Deploy web and worker separately using one database and the same released application version.
 
@@ -125,8 +121,8 @@ A path is evidence of observed blockchain exposure, not proof of common ownershi
 ### Deterministic detection
 
 1. **Sourced known-entity match:** an exact subject or observed counterparty matches a published label with attribution. State who published the label and when it was retrieved.
-2. **Possible address poisoning:** a small unsolicited inbound transfer is followed within a documented time window by an outbound transfer to a different, visually similar address. Define prefix/suffix similarity, amount and time thresholds in versioned rules. Display both directions and candidate addresses. Incoming dust alone is never evidence against its recipient.
-3. **Risky approval exposure:** identify unlimited or unusually broad token approvals from decoded observed events. State token, spender, scope and time; do not call the spender malicious without evidence. This signal describes exposure, not theft.
+2. **Possible address poisoning:** a small unsolicited inbound transfer is followed within a documented time window by an outbound transfer to a different, visually similar address. Define the legitimate comparison address, supported transfer types, prefix/suffix similarity, amount and time thresholds in versioned rules. Display both directions and benign alternatives. Abstain when required comparison history is absent. Incoming dust alone is never evidence against its recipient.
+3. **Historical approval observed:** identify unlimited or unusually broad approvals from decoded observed events. State token, spender, scope and time; do not call the spender malicious without evidence. A transfer index is not an approval index, and a historical event does not establish current allowance. Any separate **current allowance verified** result must use a block-pinned read for a known owner/spender pair. Discovering every spender or supporting permit mechanisms requires additional coverage and is outside the first slice.
 4. **Activity pattern context:** rapid fan-out, peel-chain-like sequences and fresh-address bursts may be investigated later after fixtures and false-positive testing. They are not first-slice accusations and have no automatic severity based only on graph shape.
 
 Rules return structured reasons, evidence references, relevant thresholds and possible benign explanations. No opaque universal risk score is needed for the MVP. Severity indicates why review is warranted, not guilt.
@@ -137,7 +133,7 @@ Use the Kimi Platform OpenAI-compatible API for product integration, with server
 
 The model receives only a versioned, bounded investigation package: coverage, supported signals, normalized evidence excerpts, provenance and requested output schema. Raw trace dumps are not sent wholesale. Evidence IDs are opaque server-generated references; every returned citation must resolve to an included item.
 
-Use strict JSON schema output. Validate the response, reject unsupported evidence IDs, remove or fail unsupported claims, and store the evidence-set hash with the analysis. Display deterministic evidence first and label generated text as AI analysis. The UI works when the model is disabled, rate-limited or wrong.
+Use strict JSON schema output. Validate the response and reject unsupported evidence IDs. Store the evidence-set hash with the analysis. Constrain factual AI output to typed claims grounded in supplied fields; render critical findings from deterministic templates and keep free-form explanation separate. Test amount, direction, identity, causation and certainty errors. A valid citation is not proof of claim support. Display deterministic evidence first and label generated text as AI analysis. The UI works when the model is disabled, rate-limited or wrong.
 
 All on-chain text, token metadata, labels and fetched content are untrusted data, not instructions. Delimit them in the prompt and never allow them to change tools, credentials or system instructions. Kimi receives no provider keys, session secrets, user credentials or unrelated investigations. Add explicit request budgets and server-side cost controls.
 
@@ -146,13 +142,13 @@ All on-chain text, token metadata, labels and fetched content are untrusted data
 Initial endpoints:
 
 - `POST /api/investigations`: validate subject and scope; create or reuse pinned work.
-- `GET /api/investigations/:id`: public-safe investigation status and bounded results.
+- `GET /api/investigations/:id`: owner-authorized investigation status and bounded results.
 - `GET /api/investigations/:id/evidence?cursor=...`: typed, paginated evidence and signals.
 - `POST /api/investigations/:id/history-pages`: explicit continuation of indexed transfer history.
 - `POST /api/investigations/:id/analysis`: on-demand Kimi analysis for the frozen evidence set.
 - `GET /api/investigations/:id/analysis`: validated stored explanation or explicit unavailable status.
 
-Authenticate the initial owner and authorize every investigation, job and result access. Use unguessable investigation IDs, a server-only data access layer and minimal DTOs; never expose raw database records or credentials. Apply request size limits, owner and subject rate limits, global/provider concurrency limits, output escaping and conventional security headers. Do not automatically fetch arbitrary on-chain URLs. Before private cases, define retention and deletion, disable shared caching of private metadata and add backups with tested restores. Anonymous access requires separate abuse controls and deployment approval.
+Authenticate the initial owner and authorize every investigation, job and result access. Use unguessable investigation IDs, a server-only data access layer and minimal DTOs; never expose raw database records or credentials. Apply request size limits, owner and subject rate limits, global/provider concurrency limits, output escaping and conventional security headers. Do not automatically fetch arbitrary on-chain URLs. Define retention, deletion and log redaction, disable shared caching of private metadata and add backups with tested restores before any hosted pilot. Anonymous access requires separate abuse controls and deployment approval.
 
 ### Screen hierarchy
 
@@ -182,7 +178,7 @@ Add one page of indexed transfer history, investigation jobs, cancellation, prog
 
 Implement sourced labels, address-poisoning and approval rules, their evidence UI, then the frozen evidence package and cited Kimi output. Measure rule precision/recall on the curated labeled set and report false positives separately from cases the provider cannot observe. Test fabricated citations, missing evidence, on-chain prompt injection, timeout, quota exhaustion and schema rejection.
 
-### Stage 4: private watchlists
+### Post-MVP: private watchlists
 
 Only after authorization is designed, add owner-scoped watchlists, block-hash-aware checkpoints, atomic observed-state transitions, confirmation policy and reorg reconciliation. An observation keyed by transaction hash alone is insufficient; reorg handling must use block identity. Notifications remain out of scope until the scanning and recovery behavior is verified.
 

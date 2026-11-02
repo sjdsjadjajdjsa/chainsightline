@@ -1,18 +1,17 @@
 # GitHub readiness and delivery roadmap
 
-Status: proposed, 2026-11-02
+Status: architecture reviewed and documented, 2026-11-02; application implementation approval pending
 
 ## Current state
 
-The architecture is reviewed. A local Git repository and initial documentation/hygiene files are being prepared. There is no application code, license or CI. GitHub CLI authentication is available. No remote repository has been created and nothing has been pushed.
+The architecture is reviewed. The private `sjdsjadjajdjsa/blockchain` repository contains documentation and repository hygiene, but no application code, license or CI. `Blocktrace` is a working presentation name, not a final naming decision.
 
-Create a private GitHub repository when cj approves publication. Keep it private until the product name, license, setup instructions and security boundaries are clear. Making it public is a separate decision.
+Keep the repository private until the public product name, license, setup instructions and security boundaries are clear. Making it public is a separate decision.
 
 ## 1. Repository foundation
 
-- Choose a product name and public one-sentence description; `blockchain` is only the working directory.
-- Initialize Git locally, confirm the author identity and create the initial documented commit only with cj's approval.
-- Add `.gitignore`, `.dockerignore`, `.gitattributes`, `.editorconfig`, `.env.example` and repository instructions before credentials enter the workspace. Never commit API credentials, session secrets, private case data, raw dumps containing sensitive metadata, databases or generated dependencies.
+- **Done:** private repository initialized, initial documentation/hygiene committed, and `Blocktrace` chosen as the working presentation name. Public naming remains undecided.
+- **Done:** secret/data exclusions, environment placeholder template, README and repository guidance added. Keep excluding credentials, private case data, raw dumps containing sensitive metadata, databases and generated dependencies.
 - Select an explicit license before public release. A source-visible repository without a license is not permission for others to reuse it.
 - Add a README with scope, supported chains, limitations, architecture, local setup, test commands and AI/provider configuration.
 - Add `SECURITY.md` for vulnerability reporting and `CONTRIBUTING.md` when outside contributions are wanted. Add a code of conduct only if the project will accept a public community.
@@ -80,12 +79,14 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 3. **Address investigation:** bounded transfer history, jobs and movement graph.
 4. **Signals and Kimi:** explainable rules, cited summaries and evaluation results.
 5. **Private preview:** security, operations, cost controls and recovery verification.
-6. **Later:** recursive tracing, owner-scoped watchlists, reorg-aware alerts and additional chains.
+6. **Post-MVP:** recursive tracing, owner-scoped watchlists, reorg-aware alerts and additional chains.
 
 ## Immediate sequence
 
-1. Approve implementation and choose a product name.
-2. Create the local repository foundation and private GitHub repository with explicit approval.
-3. Build the TypeScript foundation and fixture-backed transaction evidence slice.
-4. Connect cj's provider and Kimi Platform accounts in server-side local configuration.
-5. Review the working vertical slice before expanding detection or public access.
+1. Approve the TypeScript foundation and offline transaction evidence milestone.
+2. Build the workspace, synthetic fixtures, evidence contracts and browser acceptance tests without paid calls.
+3. Connect cj's provider and Kimi Platform accounts in server-side local configuration.
+4. Verify the live transaction slice, then add bounded address history and the movement graph.
+5. Evaluate detection and cited Kimi summaries before considering public deployment.
+
+`Blocktrace` is the working presentation name. Public naming, licensing and visibility remain separate decisions.

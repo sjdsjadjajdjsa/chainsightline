@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title description">
+  <title id="title">Blocktrace — Follow the evidence</title>
+  <desc id="description">A restrained teal blockchain investigation wordmark with connected evidence nodes.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c1822"/>
+      <stop offset="1" stop-color="#10272d"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7de0c3"/>
+      <stop offset="1" stop-color="#41a9b2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="420" rx="20" fill="url(#background)"/>
+  <g fill="none" stroke="#66d2bc" stroke-width="1.5" opacity="0.42">
+    <path d="M855 110 965 72 1080 132 1050 260 925 300 810 228Z"/>
+    <path d="M855 110 925 300M965 72 1050 260M1080 132 810 228"/>
+    <path d="M1080 132 1170 94M1050 260 1152 318"/>
+  </g>
+  <g fill="#122e37" stroke="#70d6bf" stroke-width="2">
+    <circle cx="855" cy="110" r="12"/>
+    <circle cx="965" cy="72" r="8"/>
+    <circle cx="1080" cy="132" r="15"/>
+    <circle cx="1050" cy="260" r="10"/>
+    <circle cx="925" cy="300" r="16"/>
+    <circle cx="810" cy="228" r="8"/>
+    <circle cx="1170" cy="94" r="5"/>
+    <circle cx="1152" cy="318" r="6"/>
+  </g>
+  <circle cx="1080" cy="132" r="5" fill="#a4f3d7"/>
+  <circle cx="925" cy="300" r="5" fill="#a4f3d7"/>
+  <g transform="translate(82 108)">
+    <path d="M0 26 48 0 96 26 96 82 48 108 0 82Z" fill="none" stroke="url(#accent)" stroke-width="4"/>
+    <path d="M24 43 48 29 72 43 72 68 48 82 24 68Z" fill="#63ccb5" fill-opacity="0.15" stroke="#7de0c3" stroke-width="2"/>
+    <path d="m38 55 8 8 15-18" fill="none" stroke="#a4f3d7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="210" y="187" fill="#eff9f6" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="72" font-weight="650" letter-spacing="-2">blocktrace</text>
+  <text x="214" y="240" fill="#a8c6c5" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="25" letter-spacing="1">FOLLOW THE EVIDENCE</text>
+  <text x="86" y="345" fill="#91b0b1" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="19">Ethereum investigations · explainable signals · cited AI analysis</text>
+</svg>
