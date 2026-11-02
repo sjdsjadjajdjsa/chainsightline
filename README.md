@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/blocktrace-banner.svg" alt="Blocktrace — Follow the evidence" width="100%" />
+  <img src="docs/assets/chainsightline-banner.png" alt="ChainSightline — Follow the evidence" width="100%" />
 </p>
 
-# Blocktrace
+# ChainSightline
 
 **Evidence-first Ethereum investigations, explained clearly.**
 
@@ -11,11 +11,11 @@ A read-only workspace being built for examining transactions, understanding risk
 > [!IMPORTANT]
 > **Early development.** A tested model-provider contract and OpenRouter adapter exist, but there is no application UI or live blockchain integration yet. Diagrams describe the planned product, not implemented detection capabilities.
 
-## Why Blocktrace?
+## Why ChainSightline?
 
 Blockchain data is public, but interpreting it is difficult. A transaction hash alone does not explain contract calls, token approvals or the context behind a transfer.
 
-Blocktrace is designed to make investigations understandable without hiding uncertainty:
+ChainSightline is designed to make investigations understandable without hiding uncertainty:
 
 - **Inspect** an Ethereum address or transaction.
 - **Trace** observed native ETH, token movements and contract calls.
@@ -102,4 +102,4 @@ No license has been selected. Reuse and redistribution are not currently granted
 
 ---
 
-*Blocktrace is a temporary presentation name. The repository stays `blockchain` while a distinct public identity is selected; an existing blockchain tracing company already uses the BlockTrace name.*
+*ChainSightline is the selected working identity following preliminary name-conflict checks. Trademark clearance remains a separate public-release step.*

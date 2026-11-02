@@ -2,7 +2,7 @@
 
 ## Current status
 
-Blocktrace is in design stage. No hosted service, application authentication or live provider integration exists yet. These are intended boundaries, not completed security controls.
+ChainSightline is in early development. No hosted service, application authentication or live provider integration exists yet. These are intended boundaries, not completed security controls.
 
 ## Reporting a vulnerability
 

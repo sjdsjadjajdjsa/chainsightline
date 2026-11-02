@@ -4,13 +4,13 @@ Status: architecture reviewed and documented, 2026-11-02; application implementa
 
 ## Current state
 
-The architecture is reviewed. The private `sjdsjadjajdjsa/blockchain` repository contains documentation and repository hygiene, but no application code, license or CI. `Blocktrace` is a working presentation name, not a final naming decision.
+The architecture is reviewed. The private `sjdsjadjajdjsa/chainsightline` repository contains documentation, repository hygiene and an initial AI-provider slice, but no application UI, live chain integration, license or CI. `ChainSightline` is the selected working identity following preliminary name-conflict checks.
 
 Keep the repository private until the public product name, license, setup instructions and security boundaries are clear. Making it public is a separate decision.
 
 ## 1. Repository foundation
 
-- **Done:** private repository initialized, initial documentation/hygiene committed, and `Blocktrace` chosen as the working presentation name. Public naming remains undecided.
+- **Done:** private repository initialized, documentation/hygiene committed and `ChainSightline` selected as the working identity after rejecting BlockTrace and ChainWitness for direct product conflicts. Preliminary checks are not trademark clearance.
 - **Done:** secret/data exclusions, environment placeholder template, README and repository guidance added. Keep excluding credentials, private case data, raw dumps containing sensitive metadata, databases and generated dependencies.
 - Select an explicit license before public release. A source-visible repository without a license is not permission for others to reuse it.
 - Add a README with scope, supported chains, limitations, architecture, local setup, test commands and AI/provider configuration.
@@ -89,4 +89,4 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 4. Verify the live transaction slice, then add bounded address history and the movement graph.
 5. Evaluate detection and cited model summaries before considering public deployment.
 
-`Blocktrace` is a temporary presentation name, not a recommended final identity: an existing blockchain tracing company uses that name. Keep the `blockchain` repository slug until a distinct public identity and clearance are agreed. Naming, licensing and visibility remain separate decisions.
+`ChainSightline` is the selected working identity. Exact-name product checks found no direct match; ChainSight is a separate established analytics company, so assess that similarity before public release. Licensing and visibility remain separate decisions.

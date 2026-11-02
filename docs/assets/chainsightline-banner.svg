@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title description">
-  <title id="title">Blocktrace — Follow the evidence</title>
+  <title id="title">ChainSightline — Follow the evidence</title>
   <desc id="description">A restrained teal blockchain investigation wordmark with connected evidence nodes.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
@@ -34,7 +34,7 @@
     <path d="M24 43 48 29 72 43 72 68 48 82 24 68Z" fill="#63ccb5" fill-opacity="0.15" stroke="#7de0c3" stroke-width="2"/>
     <path d="m38 55 8 8 15-18" fill="none" stroke="#a4f3d7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="210" y="187" fill="#eff9f6" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="72" font-weight="650" letter-spacing="-2">blocktrace</text>
+  <text x="210" y="187" fill="#eff9f6" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="66" font-weight="650" letter-spacing="-2">ChainSightline</text>
   <text x="214" y="240" fill="#a8c6c5" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="25" letter-spacing="1">FOLLOW THE EVIDENCE</text>
   <text x="86" y="345" fill="#91b0b1" font-family="Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="19">Ethereum investigations · explainable signals · cited AI analysis</text>
 </svg>

@@ -1,4 +1,4 @@
-# Blocktrace concept review
+# ChainSightline concept review
 
 Date: 2026-11-02
 

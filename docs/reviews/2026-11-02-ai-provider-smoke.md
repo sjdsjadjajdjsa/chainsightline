@@ -24,7 +24,7 @@ The adapter defaults to ZDR, rejects malformed JSON, schema violations, unknown 
 
 ## Naming check
 
-`blocktrace` is available under the current GitHub owner, but BlockTrace is already an established blockchain tracing and incident-response business. The name is also used by unrelated GitHub projects. Keep `blockchain` as the temporary repository slug and treat the current presentation as a placeholder pending a distinct identity and proper clearance. This is not trademark advice or a clearance search.
+BlockTrace was rejected after finding an established blockchain tracing and incident-response business. A deeper check also rejected ChainWitness because chainwitness.net already offers crypto address lookup and evidence-backed scam reports. ChainSightline was subsequently selected as the working identity; initial exact-name checks found no direct product match, though ChainSight is a separate established analytics company. These are preliminary checks, not trademark advice or a clearance search.
 
 ## Limits
 
