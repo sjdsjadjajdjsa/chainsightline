@@ -6,8 +6,14 @@
 
 **Follow the line.** ChainSightline turns blockchain activity into one route you read from top to bottom: what moved, between whom, which warnings deserve a look, and exactly where the evidence ends.
 
+- **Trace** a transaction or an address, and click any address to keep following the line.
+- **Before you send:** check an address you're about to pay for lookalikes of people you've paid, token contracts, and never-used accounts.
+- **Wallet checkup:** find your active approvals, with revoke links, and scam attempts in your history.
+- **Explain with AI:** a plain-language summary from Kimi K3.1 Pro or any OpenRouter model, citing each stop.
+- **For AI agents:** an MCP tool server so Claude, Cursor and other agents can run the same checks.
+
 > [!IMPORTANT]
-> **Early preview.** ChainSightline reads real Ethereum mainnet transactions with no setup and no keys. Address history needs a free Alchemy key. Detection rules are basic so far: a warning is a reason to look closer, never a verdict.
+> **Early preview.** ChainSightline reads real Ethereum mainnet transactions with no setup and no keys. Address history, checkups and comparing with your own history need a free Alchemy key; AI explanations need an OpenRouter key. Detection rules are simple patterns: a warning is a reason to look closer, never a verdict.
 
 <p align="center">
   <img src="docs/assets/route-light.png" alt="A ChainSightline route in the light theme: a starting point and stops connected by one line" width="49%" />
@@ -29,6 +35,9 @@ npm install
 ```sh
 npm run cli -- trace 0xTransactionHash   # follow a real transaction, no key needed
 npm run cli -- trace 0xAddress           # recent transfers in and out (needs an Alchemy key)
+npm run cli -- check 0xRecipient --from 0xYou   # check an address before you send
+npm run cli -- checkup 0xYourWallet             # active approvals and scam attempts
+npm run cli -- trace 0x… --explain       # add an AI explanation (OpenRouter key)
 npm run cli -- trace 0x… --evidence      # add full addresses and exact amounts
 npm run cli -- trace 0x… --json          # machine-readable output
 npm run cli -- sample                    # the invented example route
@@ -57,6 +66,16 @@ npm stop             # stop without deleting data
 
 The container is read-only, runs as a non-root user and is reachable only from your own computer.
 
+### For AI agents (MCP)
+
+ChainSightline runs as an [MCP](https://modelcontextprotocol.io) tool server, so AI agents can trace transactions, check recipients and run wallet checkups. Every tool is read-only.
+
+```sh
+chainsightline mcp --print-config   # prints the settings to paste into your AI app
+```
+
+For Claude Code, the printed `claude mcp add` line adds it in one step. For Claude Desktop or Cursor, paste the printed JSON into their MCP settings. Tools: `trace_transaction`, `trace_address`, `check_recipient` and `wallet_checkup`. Each returns the route as plain text plus the same data as JSON, including where the evidence ends.
+
 ## Your own keys (optional)
 
 ChainSightline works out of the box using dRPC's free public access. Free keys of your own make it faster and unlock more:
@@ -64,13 +83,14 @@ ChainSightline works out of the box using dRPC's free public access. Free keys o
 | Key | What it adds | Get one |
 | --- | --- | --- |
 | dRPC | Faster, more reliable transaction lookups | [drpc.org](https://drpc.org/login): create a key, open its Settings tab, copy the key |
-| Alchemy | Address history: recent transfers in and out of any address | [alchemy.com](https://www.alchemy.com): create an app for Ethereum, copy its API key |
+| Alchemy | Address history, wallet checkups, comparing a payment with your history | [alchemy.com](https://www.alchemy.com): create an app for Ethereum, copy its API key |
+| OpenRouter | AI explanations, about one or two cents each | [openrouter.ai](https://openrouter.ai/settings/keys): create a key, add a little credit |
 
 Add them whichever way is easiest:
 
 - **In the website:** click **Your keys** under the search box and paste. Each key is checked before it is saved.
 - **In the terminal:** run `chainsightline setup` (or `npm run cli -- setup`). `chainsightline keys` shows what is set.
-- **In a file:** put `DRPC_KEY=…` and `ALCHEMY_API_KEY=…` in a `.env` file in the project folder. Docker picks these up too.
+- **In a file:** put `DRPC_KEY=…`, `ALCHEMY_API_KEY=…` and `OPENROUTER_API_KEY=…` in a `.env` file in the project folder. Docker picks these up too.
 
 You can paste either the key itself or the whole link the provider shows you. Keys stay on your computer (`~/.config/chainsightline/keys.json`, readable only by you), are only ever sent to the provider they belong to, and never appear in output or error messages.
 
@@ -103,7 +123,7 @@ Every stop links to Etherscan so you can check it yourself, and the address bar 
 
 The website and the terminal share the same evidence format and wording, so both always tell the same story.
 
-**What leaves your computer:** the transactions and addresses you look up go to your chain provider (dRPC or Alchemy), and token contract addresses with the block time go to [DefiLlama](https://defillama.com) for prices. Set `CHAINSIGHTLINE_PRICES=off` to turn prices off.
+**What leaves your computer:** the transactions and addresses you look up go to your chain provider (dRPC or Alchemy), and token contract addresses with the block time go to [DefiLlama](https://defillama.com) for prices. Set `CHAINSIGHTLINE_PRICES=off` to turn prices off. When you ask for an AI explanation, the route's stops, names and warnings go to OpenRouter and the model provider, with zero-data-retention routing required by default.
 
 ## Product principles
 
@@ -147,9 +167,12 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | Live Ethereum investigation | Real transactions without keys; recent address history with Alchemy | Preview working |
 | Easy keys | Paste keys in the website or terminal, checked before saving | Preview working |
 | Branching routes | One address sending to several, shown on the line | Design needed |
-| Readable routes | ENS names, known labels, dollar values, Etherscan and revoke.cash links, shareable links | Preview working |
+| Readable routes | ENS names, known labels, dollar values, Etherscan and revoke.cash links, shareable links, follow any address | Preview working |
+| Before you send | Recipient checks against your own payment history | Preview working |
+| Wallet checkup | Active approvals and scam attempts | Preview working |
+| AI agents | MCP tool server | Preview working |
 | Signals | Approvals, address poisoning, fake and spam tokens, unsent transfers | First rules working |
-| Cited AI analysis in the app | Configurable model explanations over frozen evidence | Adapter tested |
+| Cited AI analysis in the app | Kimi K3.1 Pro or any OpenRouter model, citing each stop | Preview working |
 | Private preview | Database, jobs, security, recovery and cost checks | Not started |
 
 The detailed [delivery roadmap](docs/plans/2026-11-02-github-roadmap.md) tracks release gates. The [concept review](docs/reviews/2026-11-02-concept-review.md) records strengths, weaknesses and priorities. The [design system](design_system/README.md) explains the visual rules.
