@@ -4,6 +4,10 @@
 
 A line of evidence through complex activity. Calm investigation, not a cyberpunk dashboard.
 
+## Reference direction
+
+The owner supplied `clotheshoesandwoes/web-refs`. Use its discipline: one subject-driven idea, coherent type and spacing, restrained motion, and screenshot verification. The proposed next direction is an evidence dossier, not a generic card dashboard. No redesign is approved yet.
+
 ## Product
 
 Local-first read-only blockchain investigation workspace. Synthetic evidence is clearly labeled until live collection exists.
