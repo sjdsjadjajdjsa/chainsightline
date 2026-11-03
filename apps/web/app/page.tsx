@@ -1,3 +1,4 @@
+import { Intro } from "../components/Intro";
 import { SightlineWorkspace } from "../components/SightlineWorkspace";
-import { demoInvestigation } from "../lib/demo";
-export default function Home() { return <SightlineWorkspace initial={demoInvestigation} />; }
+import { sampleInvestigation } from "../../../packages/core/src/sample";
+export default function Home() { return <><Intro /><SightlineWorkspace initial={sampleInvestigation} /></>; }

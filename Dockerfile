@@ -1,6 +1,7 @@
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    CHAINSIGHTLINE_STANDALONE=1
 COPY . .
 RUN npm ci --ignore-scripts --no-audit --no-fund && npm run build && mkdir -p apps/web/public
 

@@ -1,8 +1,8 @@
-import type { Investigation } from "../../../packages/core/src/investigation";
+import type { Investigation } from "./investigation";
 const wallet = "0x" + "11".repeat(20);
 const recipient = "0x" + "22".repeat(20);
 const spender = "0x" + "33".repeat(20);
-export const demoInvestigation: Investigation = {
+export const sampleInvestigation: Investigation = {
   id: "synthetic-ethereum-01", synthetic: true, chain: "ethereum-mainnet", subject: wallet, blockNumber: "19,284,621", blockHash: "0x" + "0".repeat(64), observedAt: "Synthetic example · no live chain request",
   coverage: { status: "partial", summary: "Three illustrative observations", limitations: ["Not a real blockchain investigation", "No execution trace or address history", "No wallet ownership or criminal-activity conclusion"] },
   movements: [

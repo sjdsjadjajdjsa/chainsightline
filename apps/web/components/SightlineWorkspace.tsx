@@ -2,30 +2,15 @@
 import { useEffect, useId, useState } from "react";
 import { ArrowRight, LoaderCircle, Moon, Sun } from "lucide-react";
 import { investigationSchema, type Investigation } from "../../../packages/core/src/investigation";
+import { asSentence, describeMovement, evidenceSummary, kindName, roleName, roleOf, routeTitle, shortHash, type Movement } from "../../../packages/core/src/route";
 import { Brand } from "./Brand";
-type Movement = Investigation["movements"][number];
-type Role = "subject" | "counterparty" | "spender";
-const roleName: Record<Role, string> = { subject: "Subject", counterparty: "Counterparty", spender: "Spender" };
-const kindName: Record<Movement["kind"], string> = { "native-transfer": "Native transfer", "token-transfer": "Token transfer", approval: "Token approval" };
-const numberWord = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
-const short = (value: string) => value.length > 14 ? value.slice(0, 6) + "…" + value.slice(-4) : value;
-const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
-const sentence = (text: string) => text.trim().replace(/[.\s]*$/, ".");
-function roleOf(address: string, investigation: Investigation): Role {
-  if (same(address, investigation.subject)) return "subject";
-  return investigation.movements.some(movement => movement.kind === "approval" && same(movement.to, address)) ? "spender" : "counterparty";
-}
 function Address({ value, investigation }: { value: string; investigation: Investigation }) {
   const role = roleOf(value, investigation);
-  return <span className={"address address-" + role} title={value}><span className="address-role">{roleName[role]}</span><span className="address-hash">{short(value)}</span></span>;
+  return <span className={"address address-" + role} title={value}><span className="address-role">{roleName[role]}</span><span className="address-hash">{shortHash(value)}</span></span>;
 }
 function Headline({ movement, investigation }: { movement: Movement; investigation: Investigation }) {
-  const fromSubject = same(movement.from, investigation.subject);
-  if (movement.kind === "approval") return <>{fromSubject ? "The subject" : "An account"} allowed a spender to move <span className="amount">{movement.amount.toLowerCase()} {movement.asset}</span>.</>;
-  const amount = <span className="amount">{movement.amount} {movement.asset}</span>;
-  if (fromSubject) return <>{amount} left the subject.</>;
-  if (same(movement.to, investigation.subject)) return <>{amount} arrived at the subject.</>;
-  return <>{amount} moved between two other accounts.</>;
+  const parts = describeMovement(movement, investigation);
+  return <>{parts.before}<span className="amount">{parts.amount}</span>{parts.after}</>;
 }
 export function SightlineWorkspace({ initial }: { initial: Investigation }) {
   const uid = useId();
@@ -42,6 +27,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
     const next = !dark;
     setDark(next);
     document.documentElement.dataset.theme = next ? "dark" : "light";
+    try { localStorage.setItem("chainsightline-theme", next ? "dark" : "light"); } catch {}
   }
   function fail(text: string, input: boolean) {
     setEntered("");
@@ -69,8 +55,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
       setLoading(false);
     }
   }
-  const count = investigation.movements.length;
-  const title = (numberWord[count] ?? String(count)) + (count === 1 ? " movement" : " movements") + ", one line.";
+  const title = routeTitle(investigation.movements.length);
   return <div className="site">
     <header className="masthead"><Brand /><button className="theme-toggle" onClick={toggleTheme} aria-label={dark ? "Use light theme" : "Use dark theme"}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button></header>
     <main className="page">
@@ -91,7 +76,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
               ? <p key={error.attempt} className="search-error" role="alert">{error.text}</p>
               : <p className="search-hint">This preview isn’t connected to Ethereum yet, so every search opens the same invented example. <button type="button" className="text-button" onClick={() => { setKind("address"); setQuery(initial.subject); setError(null); }}>Use the sample address</button></p>}
           </div>
-          <p className="search-entered" aria-live="polite">{entered && <>You entered <span className="address-hash">{short(entered)}</span>. The route below is still the invented example, not evidence about it.</>}</p>
+          <p className="search-entered" aria-live="polite">{entered && <>You entered <span className="address-hash">{shortHash(entered)}</span>. The route below is still the invented example, not evidence about it.</>}</p>
         </form>
       </section>
       <section className="route" aria-labelledby="route-title">
@@ -105,7 +90,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
             <p className="stop-label">Starting point</p>
             <h3 className="stop-title">The subject’s account.</h3>
             <p className="stop-meta"><Address value={investigation.subject} investigation={investigation} /></p>
-            <p className="stop-meta">Invented Ethereum-style data at block {investigation.blockNumber}. {sentence(investigation.coverage.summary)}</p>
+            <p className="stop-meta">Invented Ethereum-style data at block {investigation.blockNumber}. {asSentence(investigation.coverage.summary)}</p>
           </li>
           {investigation.movements.map((movement, index) => {
             const warning = investigation.warnings.find(item => item.evidenceId === movement.evidenceId);
@@ -116,14 +101,14 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
               <p className="stop-label" id={key + "-label"}>Stop {index + 1}. {kindName[movement.kind]}</p>
               <h3 className="stop-title"><Headline movement={movement} investigation={investigation} /></h3>
               <p className="stop-route"><Address value={movement.from} investigation={investigation} /><ArrowRight className="route-arrow" size={16} aria-hidden="true" /><span className="sr-only">to</span><Address value={movement.to} investigation={investigation} /></p>
-              {warning && <div className="stop-note"><p><strong>{sentence(warning.title)}</strong> {warning.reason}</p></div>}
+              {warning && <div className="stop-note"><p><strong>{asSentence(warning.title)}</strong> {warning.reason}</p></div>}
               <button type="button" className="evidence-toggle" aria-expanded={isOpen} aria-controls={key + "-evidence"} aria-describedby={key + "-label"} onClick={() => setOpen(isOpen ? null : movement.id)}>{isOpen ? "Hide the evidence" : "Show the evidence"}</button>
               <dl className="evidence" id={key + "-evidence"} hidden={!isOpen}>
                 <div><dt>Reference</dt><dd>{movement.evidenceId}</dd></div>
                 <div><dt>From</dt><dd className="hash">{movement.from}</dd></div>
                 <div><dt>To</dt><dd className="hash">{movement.to}</dd></div>
                 <div><dt>Amount</dt><dd>{movement.amount} {movement.asset}</dd></div>
-                <div><dt>What it shows</dt><dd>{movement.kind === "approval" ? "An invented historical approval event. The current allowance has not been checked." : "One invented " + kindName[movement.kind].toLowerCase() + ". Ownership and intent are not established."}</dd></div>
+                <div><dt>What it shows</dt><dd>{evidenceSummary(movement, investigation.synthetic)}</dd></div>
               </dl>
             </li>;
           })}
@@ -132,7 +117,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
             <p className="stop-label">End of the line</p>
             <h3 className="stop-title">Where the evidence ends.</h3>
             <p className="stop-meta">{investigation.explanation.uncertainty}</p>
-            <ul className="unknowns">{investigation.coverage.limitations.map((item, index) => <li key={index}>{sentence(item)}</li>)}</ul>
+            <ul className="unknowns">{investigation.coverage.limitations.map((item, index) => <li key={index}>{asSentence(item)}</li>)}</ul>
             <p className="stop-meta">This example explanation was written in advance.</p>
           </li>
         </ol>

@@ -11,6 +11,7 @@ async function noOverflow(page, label) {
 }
 for (const width of [390, 1440, 3440]) {
   const page = await browser.newPage({ viewport: { width, height: 1000 } });
+  await page.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
@@ -40,6 +41,23 @@ for (const width of [390, 1440, 3440]) {
   console.log(JSON.stringify({ width, errors }));
   await page.close();
 }
+const intro = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await intro.goto(base);
+await intro.waitForTimeout(800);
+await intro.screenshot({ path: out + "intro-1440.png" });
+const overlay = intro.locator(".intro-overlay");
+if (await overlay.evaluate(element => getComputedStyle(element).pointerEvents) !== "none") throw new Error("Intro blocks clicks");
+await intro.waitForTimeout(1400);
+if (await overlay.evaluate(element => getComputedStyle(element).visibility) !== "hidden") throw new Error("Intro did not finish");
+await intro.reload();
+if (await overlay.evaluate(element => getComputedStyle(element).display) !== "none") throw new Error("Intro replayed in the same session");
+const reduced = await browser.newPage({ reducedMotion: "reduce" });
+await reduced.goto(base);
+if (await reduced.locator(".intro-overlay").evaluate(element => getComputedStyle(element).display) !== "none") throw new Error("Intro shown with reduced motion");
+await reduced.getByRole("button", { name: "Use dark theme" }).click();
+await reduced.reload();
+if (await reduced.evaluate(() => document.documentElement.dataset.theme) !== "dark") throw new Error("Theme not remembered");
+console.log("Intro, reduced motion and theme memory checks passed");
 const invalid = await browser.newPage();
 await invalid.goto(base, { waitUntil: "networkidle" });
 await invalid.getByRole("button", { name: "Open the sample" }).click();
