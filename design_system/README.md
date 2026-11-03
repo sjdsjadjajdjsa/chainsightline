@@ -6,7 +6,7 @@ A line of evidence through complex activity. Calm investigation, not a cyberpunk
 
 ## Reference direction
 
-The owner supplied `clotheshoesandwoes/web-refs`. Use its discipline: one subject-driven idea, coherent type and spacing, restrained motion, and screenshot verification. The proposed next direction is an evidence dossier, not a generic card dashboard. No redesign is approved yet.
+The owner supplied `clotheshoesandwoes/web-refs`. Use its discipline: one subject-driven idea, coherent type and spacing, restrained motion, and screenshot verification. The approved Living Evidence File direction is implemented: an editorial dossier, not a generic card dashboard.
 
 ## Product
 
