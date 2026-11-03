@@ -54,7 +54,7 @@ export async function readSavedKeys(): Promise<Keys> {
   } catch { return {}; }
 }
 function environmentKey(name: KeyName) {
-  for (const variable of envNames[name]) { const value = process.env[variable]?.trim(); if (value) return value; }
+  for (const variable of envNames[name]) { const value = process.env[variable]?.trim(); if (value) return extractKey(name, value) ?? value; }
   return undefined;
 }
 export async function resolveKeys() {

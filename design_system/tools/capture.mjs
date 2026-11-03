@@ -83,5 +83,17 @@ if (process.env.CHAINSIGHTLINE_LIVE_TX) {
   await live.screenshot({ path: out + "live-1440.png", fullPage: true });
   console.log("Live transaction rendered: " + (await live.locator(".trail > li").count() - 2) + " stops");
 }
+if (process.env.CHAINSIGHTLINE_LIVE_ADDRESS) {
+  const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await live.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
+  await live.goto(base, { waitUntil: "networkidle" });
+  await live.getByRole("button", { name: "Address", exact: true }).click();
+  await live.getByRole("textbox").fill(process.env.CHAINSIGHTLINE_LIVE_ADDRESS);
+  await live.getByRole("button", { name: "Follow the line" }).click();
+  await live.locator(".stop-title", { hasText: "The address you asked about." }).waitFor({ timeout: 60000 });
+  await live.waitForTimeout(800);
+  await live.screenshot({ path: out + "live-address-1440.png", fullPage: true });
+  console.log("Live address rendered: " + (await live.locator(".trail > li").count() - 2) + " stops");
+}
 console.log("Browser interaction, validation and health checks passed");
 await browser.close();

@@ -1,4 +1,5 @@
 import type { Investigation } from "../../core/src/investigation";
+import { shortHash } from "../../core/src/route";
 import { blockLabel, cleanSymbol, formatUnits, toBigInt } from "./format";
 import { ChainError, type Rpc } from "./rpc";
 type Movement = Investigation["movements"][number];
@@ -23,8 +24,10 @@ export async function investigateAddress(address: string, rpc: Rpc): Promise<Inv
   const recent = transfers.slice(0, ADDRESS_LIMIT).reverse();
   const movements: Movement[] = recent.map((transfer, index) => {
     const native = transfer.category === "external" || transfer.category === "internal";
+    const nft = transfer.category === "erc721" || transfer.category === "erc1155";
+    const contract = transfer.rawContract?.address;
     const shown = amountOf(transfer);
-    const movement: Movement = { id: "transfer-" + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? "tokens", amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", transaction " + transfer.hash.slice(0, 10) + "…", transactionHash: transfer.hash.toLowerCase() };
+    const movement: Movement = { id: "transfer-" + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? (contract ? (nft ? "NFT from " : "tokens from ") + shortHash(contract) : nft ? "NFT" : "tokens"), amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : nft ? "NFT transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", transaction " + transfer.hash.slice(0, 10) + "…", transactionHash: transfer.hash.toLowerCase() };
     if (shown.rawAmount) movement.rawAmount = shown.rawAmount;
     return movement;
   });
