@@ -9,7 +9,7 @@
 A read-only workspace being built for examining transactions, understanding risk signals and tracing observed asset movements. Deterministic analysis comes first; an explicitly configured AI model explains the evidence with citations.
 
 > [!IMPORTANT]
-> **Early development.** A tested model-provider contract and OpenRouter adapter exist, but there is no application UI or live blockchain integration yet. Diagrams describe the planned product, not implemented detection capabilities.
+> **Early development.** A polished local browser workspace with synthetic evidence and a tested model-provider adapter exists. Live blockchain integration, durable investigations and real detection are not connected. Diagrams describe the planned product.
 
 ## Why ChainSightline?
 
@@ -79,8 +79,9 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | --- | --- | --- |
 | Architecture and repository | Reviewed design, private repository and project guidance | Complete |
 | AI provider contract | Model-neutral evidence schema, OpenRouter adapter and offline tests | Initial slice complete |
-| TypeScript foundation | Workspace, database, authentication, jobs and CI | Not started |
-| Offline transaction evidence | Synthetic fixtures, normalization and evidence interface | Not started |
+| Local browser workspace | Responsive investigation UI, synthetic evidence and health endpoint | Initial preview working |
+| TypeScript foundation | Workspace, database, authentication, jobs and CI | UI started; infrastructure pending |
+| Offline transaction evidence | Synthetic fixtures, normalization and evidence interface | UI fixture only |
 | Live Ethereum investigation | Provider-backed transaction and bounded address history | Not started |
 | Signals and graph | Explainable rules and single-transaction movement graph | Not started |
 | Cited AI analysis | Configurable model summaries over frozen evidence | Adapter smoke tested |
@@ -90,7 +91,7 @@ The detailed [delivery roadmap](docs/plans/2026-11-02-github-roadmap.md) tracks 
 
 ## Development and model access
 
-The first standalone TypeScript provider slice is testable with `npm ci`, `npm test` and `npm run typecheck`. The full application setup will arrive with the workspace foundation. Real environment files are ignored by Git.
+Run `npm ci`, then `npm run dev` and open `http://localhost:3000`. For the Docker launcher, run `npm start`; it builds the app, waits for health and opens your default browser. `npm stop` stops services without deleting data. The current preview uses synthetic evidence; no chain provider is required. Verify with `npm test`, `npm run typecheck`, `npm run build` and, while the app is running, `npm run test:browser`. Real environment files are ignored by Git.
 
 Kimi K3.1 Pro remains the primary development model and default product-analysis model. OpenRouter provides the initial provider-neutral transport; Kimi, OpenAI and Google models passed a small synthetic structured-output compatibility test. Compatible models are supported, not every possible model. No silent fallback or automatic weakening of privacy settings. See [AI provider configuration](docs/ai-providers.md) and the [measured smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md).
 
