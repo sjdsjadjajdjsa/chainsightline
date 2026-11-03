@@ -1,7 +1,10 @@
 # Identity
 
-ChainSightline follows the evidence. The Living Evidence File is an editorial case document inside the deep-navy workspace: warm paper, ink, ruled lines, a continuous sightline and an investigation margin. Manrope and DM Sans support the workspace; Source Serif 4 gives the case file its editorial voice. Evidence nodes and thin connecting lines remain the brand's visual language.
+ChainSightline follows the line. The whole investigation page is one transit-map route read from top to bottom: a starting point, one stop per movement, and a terminus bar labelled "Where the evidence ends."
 
-Dark is the default; light is a full alternate theme. Both use the same spacing and component hierarchy. Mobile restacks investigation panels rather than compressing them. Graph and timeline representations expose the same observations; evidence remains available without AI.
-
-No guilt scores, criminal labels, neon effects or unsupported safety states. Partial coverage and synthetic data remain visible. Native dialog behavior keeps keyboard focus with the triggering evidence. Fonts are bundled locally rather than requested from a third party at runtime.
+- Type: Source Serif 4 for headlines, lede and the wordmark; DM Sans for interface and evidence text. Two families only.
+- Colour: warm paper and ink in light, deep slate in dark. The route line is teal. Colour otherwise appears only on address hashes (subject teal, counterparty violet, spender blue) and the single warning colour. Each coloured hash is paired with its role word, so colour is never the only cue.
+- Stops: a short grey label, a plain-language serif headline, the from/to route, an attached warning branching off the line, and an inline "Show the evidence" disclosure.
+- Motion: only the stop marker filling when its evidence opens, plus the theme cross-fade. Reduced motion removes both.
+- Avoid: cards, KPI tiles, pills, badges, tiny letter-spaced caps, glows, guilt scores and anything that reads as a verdict. The invented example is named once, in italic beside the route title, and once near the search.
+- Mark: three stops on a vertical line.

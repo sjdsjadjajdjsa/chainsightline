@@ -1,3 +1,3 @@
-import { Workspace } from "../components/Workspace";
+import { SightlineWorkspace } from "../components/SightlineWorkspace";
 import { demoInvestigation } from "../lib/demo";
-export default function Home() { return <Workspace initial={demoInvestigation} />; }
+export default function Home() { return <SightlineWorkspace initial={demoInvestigation} />; }
