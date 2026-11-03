@@ -190,12 +190,12 @@ CHAINSIGHTLINE_LIVE_TX=0x… npm run test:browser   # also render a real transac
 
 Kimi K3.1 Pro is the primary development model and the default product model. OpenRouter provides the provider-neutral transport; Kimi, OpenAI and Google models passed a small structured-output compatibility test. There is no silent fallback and privacy settings are never weakened automatically. See [AI provider configuration](docs/ai-providers.md) and the [smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md). Real environment files are ignored by Git.
 
-## Security and release
+## Security and license
 
-Not yet publicly released. A license, contribution policy and private security contact are still needed before the repository goes public. See [security and data-handling notes](SECURITY.md).
+Report security problems privately, as described in [SECURITY.md](SECURITY.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-No license has been selected. Reuse and redistribution are not currently granted.
+ChainSightline is released under the [MIT License](LICENSE). It is provided as is: it is not financial, legal or security advice, and a missing warning does not mean an address or transaction is safe.
 
 ---
 
-*ChainSightline is the selected working name following preliminary name-conflict checks. Trademark clearance remains a separate public-release step.*
+*Built with care for people who want to understand what actually happened on-chain.*

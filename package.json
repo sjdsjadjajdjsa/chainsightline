@@ -1,5 +1,12 @@
 {
   "name": "chainsightline",
+  "version": "0.1.0",
+  "description": "Follow the line: read Ethereum transactions one stop at a time, check an address before you pay it, and check your wallet for risky approvals.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sjdsjadjajdjsa/chainsightline.git"
+  },
   "private": true,
   "type": "module",
   "engines": {
@@ -36,7 +43,6 @@
     "@types/react-dom": "19.2.3",
     "typescript": "5.9.3"
   },
-  "version": "0.1.0",
   "bin": {
     "chainsightline": "bin/chainsightline.mjs"
   }

@@ -28,7 +28,7 @@ Keep the repository private until the public product name, license, setup instru
 
 ## 3. Provider and model proof
 
-This needs cj's service accounts and credentials; do not request secrets in chat or commit them.
+This needs the owner's service accounts and credentials; do not request secrets in chat or commit them.
 
 - Select an Ethereum indexed-transfer-history and historical call-tracing provider. Alchemy is the current candidate, not an authenticated choice.
 - Verify account plan, quotas, historical range, supported transfer categories, pagination, index freshness, retention and commercial terms with real fixtures.
@@ -85,7 +85,7 @@ This needs cj's service accounts and credentials; do not request secrets in chat
 
 1. Approve the TypeScript foundation and offline transaction evidence milestone.
 2. Build the workspace, synthetic fixtures, evidence contracts and browser acceptance tests without paid calls.
-3. Connect cj's chain provider and chosen model provider in server-side local configuration.
+3. Connect the owner's chain provider and chosen model provider in server-side local configuration.
 4. Verify the live transaction slice, then add bounded address history and the movement graph.
 5. Evaluate detection and cited model summaries before considering public deployment.
 
