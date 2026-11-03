@@ -1,6 +1,7 @@
 name: chainsightline
 services:
   web:
+    image: chainsightline-web
     build:
       context: .
       dockerfile: Dockerfile

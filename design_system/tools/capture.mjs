@@ -21,6 +21,11 @@ for (const width of [390, 1440, 3440]) {
     await page.getByText("What remains unknown").waitFor();
     await page.getByRole("button", { name: /Approval worth reviewing/ }).click();
     await page.getByRole("dialog").waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    const focused = await page.evaluate(() => document.activeElement?.textContent);
+    if (!focused?.includes("Approval worth reviewing")) throw new Error("Dialog focus did not return to trigger");
+    await page.getByRole("button", { name: /Approval worth reviewing/ }).click();
     await page.getByRole("button", { name: "Close evidence" }).click();
     await page.getByRole("button", { name: "Graph", exact: true }).click();
     await page.getByRole("img", { name: "Observed transfers between three synthetic addresses" }).waitFor();
