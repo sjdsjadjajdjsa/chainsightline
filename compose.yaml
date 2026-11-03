@@ -12,6 +12,12 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       HOSTNAME: 0.0.0.0
       PORT: "3000"
+      CHAINSIGHTLINE_CONFIG_DIR: /config
+      CHAINSIGHTLINE_STORAGE: docker
+      DRPC_KEY: ${DRPC_KEY:-}
+      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+    volumes:
+      - chainsightline-config:/config
     init: true
     read_only: true
     cap_drop:
@@ -28,3 +34,9 @@ services:
       start_period: 10s
       retries: 30
     stop_grace_period: 15s
+volumes:
+  chainsightline-config:
+networks:
+  default:
+    driver_opts:
+      com.docker.network.driver.mtu: "1280"

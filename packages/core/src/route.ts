@@ -14,7 +14,7 @@ export function roleOf(address: string, investigation: Investigation): Role {
 export function describeMovement(movement: Movement, investigation: Investigation) {
   const fromSubject = sameAddress(movement.from, investigation.subject);
   if (movement.kind === "approval") return { before: (fromSubject ? "The subject" : "An account") + " allowed a spender to move ", amount: movement.amount.toLowerCase() + " " + movement.asset, after: "." };
-  const amount = movement.amount + " " + movement.asset;
+  const amount = movement.amount.charAt(0).toUpperCase() + movement.amount.slice(1) + " " + movement.asset;
   if (fromSubject) return { before: "", amount, after: " left the subject." };
   if (sameAddress(movement.to, investigation.subject)) return { before: "", amount, after: " arrived at the subject." };
   return { before: "", amount, after: " moved between two other accounts." };
@@ -25,5 +25,6 @@ export function routeTitle(count: number) {
 export function evidenceSummary(movement: Movement, synthetic: boolean) {
   const prefix = synthetic ? "invented " : "observed ";
   if (movement.kind === "approval") return "An " + prefix + "historical approval event. The current allowance has not been checked.";
+  if (movement.kind === "token-transfer" && !synthetic) return "A token transfer event reported by the token contract. Balances, ownership and intent are not checked.";
   return "One " + prefix + kindName[movement.kind].toLowerCase() + ". Ownership and intent are not established.";
 }

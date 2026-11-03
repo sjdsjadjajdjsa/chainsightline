@@ -38,6 +38,26 @@ a{color:inherit;text-decoration:none}
 .search-entered:empty{display:none}
 .search-entered .address-hash{color:var(--ink)}
 .text-button{background:none;border:0;padding:0;color:var(--line);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.keys{margin-top:40px;border-top:1px solid var(--rule)}
+.keys-intro{margin:24px 0 8px;color:var(--soft);max-width:40em;font-size:16px}
+.key-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 40px;padding:28px 0;border-bottom:1px solid var(--rule)}
+.key-text h3{font-family:var(--serif);font-weight:500;font-size:22px;line-height:1.2}
+.key-text p{margin-top:6px;color:var(--soft);font-size:15px}
+.key-get a{display:inline-flex;align-items:center;gap:4px;color:var(--line);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.key-form{display:flex;align-items:center;gap:12px;align-self:center;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.key-form:focus-within{border-bottom-color:var(--line)}
+.key-form input{flex:1;min-width:0;border:0;background:transparent;font-size:16px;padding:8px 0;outline:none}
+.key-form input::placeholder{color:var(--soft);opacity:1}
+.key-form button[type=submit]{border:0;border-radius:4px;background:var(--ink);color:var(--bg);padding:8px 16px;font-size:15px;font-weight:600}
+.key-form button[type=submit][aria-disabled=true]{opacity:.5}
+.key-status{align-self:center;color:var(--soft);font-size:15px}
+.key-message{grid-column:2;font-size:15px;color:var(--line);min-height:1.6em}
+.key-message.is-error{color:var(--warn);font-weight:600}
+.keys-file{margin-top:16px;font-size:14px;color:var(--soft)}
+.keys-file .hash{overflow-wrap:anywhere}
+.failed{color:var(--warn)}
+.route-header h2:focus{outline:none}
+.route-header h2:focus-visible{outline:2px solid var(--line);outline-offset:6px}
 .route{padding-bottom:104px}
 .route-header{display:flex;align-items:baseline;justify-content:space-between;gap:24px;border-top:1px solid var(--rule);padding-top:44px;margin-bottom:56px}
 .route-header h2{font-family:var(--serif);font-weight:500;font-size:clamp(30px,4vw,42px);line-height:1.1;letter-spacing:-.02em}
@@ -84,7 +104,7 @@ a{color:inherit;text-decoration:none}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (min-width:1600px){:root{--rail:104px;--axis:26px;--marker-y:54px}body{font-size:19px}.page{max-width:1040px}.masthead,.colophon{max-width:1360px}}
-@media (max-width:700px){:root{--rail:50px;--axis:14px;--marker-y:46px}body{font-size:16px}.masthead,.colophon{padding:20px}.colophon{flex-direction:column;align-items:flex-start;gap:12px}.page{padding:0 20px}.intro{padding:40px 0 68px}.search{margin-top:36px}.search-field{flex-direction:column;align-items:stretch;gap:14px;border-bottom:0;padding:0}.search-field input{border-bottom:2px solid var(--ink);padding:12px 0}.search-field:focus-within input{border-bottom-color:var(--line)}.search-field button{justify-content:center;padding:14px 20px}.route-header{flex-direction:column;align-items:flex-start;gap:16px;margin-bottom:44px}.trail>li{padding-bottom:60px}.stop-route{flex-direction:column;align-items:flex-start;gap:2px}.route-arrow{transform:rotate(90deg);margin:2px 0 2px 4px}.address{font-size:14px}.stamp{font-size:17px}.evidence>div{grid-template-columns:1fr;gap:2px}}
+@media (max-width:700px){:root{--rail:50px;--axis:14px;--marker-y:46px}body{font-size:16px}.masthead,.colophon{padding:20px}.colophon{flex-direction:column;align-items:flex-start;gap:12px}.page{padding:0 20px}.intro{padding:40px 0 68px}.search{margin-top:36px}.search-field{flex-direction:column;align-items:stretch;gap:14px;border-bottom:0;padding:0}.search-field input{border-bottom:2px solid var(--ink);padding:12px 0}.search-field:focus-within input{border-bottom-color:var(--line)}.search-field button{justify-content:center;padding:14px 20px}.route-header{flex-direction:column;align-items:flex-start;gap:16px;margin-bottom:44px}.trail>li{padding-bottom:60px}.stop-route{flex-direction:column;align-items:flex-start;gap:2px}.route-arrow{transform:rotate(90deg);margin:2px 0 2px 4px}.address{font-size:14px}.stamp{font-size:17px}.evidence>div{grid-template-columns:1fr;gap:2px}.key-row{grid-template-columns:1fr;gap:14px}.key-message{grid-column:1}}
 .intro-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);pointer-events:none;animation:intro-leave .45s ease 1.3s forwards}
 [data-intro=seen] .intro-overlay{display:none}
 .intro-mark{display:flex;flex-direction:column;align-items:center;gap:14px}

@@ -3,7 +3,7 @@ const wallet = "0x" + "11".repeat(20);
 const recipient = "0x" + "22".repeat(20);
 const spender = "0x" + "33".repeat(20);
 export const sampleInvestigation: Investigation = {
-  id: "synthetic-ethereum-01", synthetic: true, chain: "ethereum-mainnet", subject: wallet, blockNumber: "19,284,621", blockHash: "0x" + "0".repeat(64), observedAt: "Synthetic example · no live chain request",
+  id: "synthetic-ethereum-01", synthetic: true, kind: "sample", chain: "ethereum-mainnet", source: "Invented example", subject: wallet, blockNumber: "19,284,621", blockHash: "0x" + "0".repeat(64), observedAt: "Synthetic example · no live chain request",
   coverage: { status: "partial", summary: "Three illustrative observations", limitations: ["Not a real blockchain investigation", "No execution trace or address history", "No wallet ownership or criminal-activity conclusion"] },
   movements: [
     { id: "movement-1", kind: "native-transfer", from: wallet, to: recipient, asset: "ETH", amount: "0.42", description: "Observed native transfer", evidenceId: "evidence-1" },

@@ -20,4 +20,6 @@ test("labels roles and titles", () => {
   assert.equal(routeTitle(1), "One movement, one line.");
   assert.equal(routeTitle(12), "12 movements, one line.");
   assert.equal(asSentence("Done.."), "Done.");
+  const approx = { ...sampleInvestigation, movements: [{ ...sampleInvestigation.movements[0]!, amount: "about 0.42" }] };
+  assert.equal(text(0, approx), "About 0.42 ETH left the subject.");
 });
