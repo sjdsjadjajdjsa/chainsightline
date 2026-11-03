@@ -94,12 +94,16 @@ flowchart LR
 
 1. You paste an address or transaction hash. It is checked before anything else happens.
 2. ChainSightline asks a data provider for the transaction, its receipt, its block and its call trace. Your own key is used first; if it fails, dRPC's free public access takes over. For an address, Alchemy returns its 20 most recent transfers.
-3. Each movement becomes a stop with a plain sentence such as "0.42 ETH left the subject", plus the two addresses colour-coded and labelled by role. ETH sent with the transaction, ETH moved between contracts inside it, token and NFT transfers, and approvals are all included. Token names are read from the token contracts.
-4. Rules attach warnings to the stop they concern. Today that means unlimited token approvals and collection-wide NFT approvals. A warning is a reason to look closer, never a verdict.
+3. Each movement becomes a stop with a plain sentence such as "0.42 ETH left the subject", plus the two addresses colour-coded and labelled by role. ETH sent with the transaction, ETH moved between contracts inside it, token and NFT transfers, and approvals are all included. Token names are read from the token contracts. Addresses show their ENS name or a known label (exchanges, routers, major tokens) next to the hash, and amounts show their dollar value from DefiLlama.
+4. Rules attach warnings to the stop they concern: unlimited and collection-wide approvals (with a link to revoke them), lookalike addresses and address poisoning, zero-value transfers planted in someone else's history, fake copies of USDT, USDC, DAI, WETH, WBTC, stETH and ETH, tokens whose names advertise websites, and transfers out of a wallet that the wallet never sent. A warning is a reason to look closer, never a verdict.
 5. The route ends with what is still unknown, such as a missing call trace, hidden events, or movements beyond the first 40, so missing data never reads as safety.
 6. Planned: an AI model (Kimi by default, or any compatible OpenRouter model) explains the route. Its answer must cite the evidence or it is rejected. The adapter is built and tested but not yet wired into the app.
 
+Every stop links to Etherscan so you can check it yourself, and the address bar updates (for example `?tx=0x…`) so you can copy a link that reopens the same investigation in any ChainSightline.
+
 The website and the terminal share the same evidence format and wording, so both always tell the same story.
+
+**What leaves your computer:** the transactions and addresses you look up go to your chain provider (dRPC or Alchemy), and token contract addresses with the block time go to [DefiLlama](https://defillama.com) for prices. Set `CHAINSIGHTLINE_PRICES=off` to turn prices off.
 
 ## Product principles
 
@@ -143,7 +147,8 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | Live Ethereum investigation | Real transactions without keys; recent address history with Alchemy | Preview working |
 | Easy keys | Paste keys in the website or terminal, checked before saving | Preview working |
 | Branching routes | One address sending to several, shown on the line | Design needed |
-| Signals | Versioned, explainable rules with labelled test cases | Approval rules only |
+| Readable routes | ENS names, known labels, dollar values, Etherscan and revoke.cash links, shareable links | Preview working |
+| Signals | Approvals, address poisoning, fake and spam tokens, unsent transfers | First rules working |
 | Cited AI analysis in the app | Configurable model explanations over frozen evidence | Adapter tested |
 | Private preview | Database, jobs, security, recovery and cost checks | Not started |
 

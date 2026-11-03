@@ -9,3 +9,6 @@
 - 2026-11-03: live Ethereum transactions (keyless via dRPC public access) and Alchemy address history are connected. The invented example remains one click away and is labelled.
 - Movements within a transaction are grouped (ETH before token events), not in strict execution order.
 - Branching routes (one address sending to many) still render as a straight list of stops.
+- Names: known labels win over ENS; ENS names must be plain ASCII `.eth` names and the hash is always shown beside any name, so a name can't hide a lookalike address.
+- Dollar values only appear for prices DefiLlama reports with at least 90% confidence; transactions use the price at the time, address history uses today's price.
+- "Not sent by this address" only applies to personal wallets (including EIP-7702 delegated ones), unpriced fungible tokens, so marketplace and exchange pulls are not flagged.
