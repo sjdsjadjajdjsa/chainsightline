@@ -7,3 +7,5 @@
 - The route view replaces the graph; branching routes (one address sending to several) need a design before live data arrives.
 - Passed local browser acceptance at 390, 1440 and 3440 widths, light/dark, interactions and health endpoint on 2026-11-02.
 - Docker launcher verified on 2026-11-02: `npm start` builds, starts and waits for a healthy loopback-only container. Host networking is used for the build step because this environment's bridge networking stalls npm; runtime port remains bound to 127.0.0.1.
+- Intro plays once per browser session, never blocks clicks and is skipped with reduced motion. Theme choice is remembered in local storage.
+- Terminal command (`chainsightline`) renders the same route; web mode runs without Docker via `next start`. Neither is published to npm.

@@ -1,46 +1,87 @@
 <p align="center">
-  <img src="docs/assets/chainsightline-banner.png" alt="ChainSightline — Follow the evidence" width="100%" />
+  <img src="docs/assets/chainsightline-banner.png" alt="ChainSightline: follow the line. Every investigation, one stop at a time." width="100%" />
 </p>
 
 # ChainSightline
 
-**Evidence-first Ethereum investigations, explained clearly.**
-
-A read-only workspace being built for examining transactions, understanding risk signals and tracing observed asset movements. Deterministic analysis comes first; an explicitly configured AI model explains the evidence with citations.
+**Follow the line.** ChainSightline turns blockchain activity into one route you read from top to bottom: what moved, between whom, which warnings deserve a look, and exactly where the evidence ends.
 
 > [!IMPORTANT]
-> **Early development.** A polished local browser workspace with synthetic evidence and a tested model-provider adapter exists. Live blockchain integration, durable investigations and real detection are not connected. Diagrams describe the planned product.
+> **Early preview.** The website, terminal command and AI provider adapter work, but ChainSightline is **not connected to Ethereum yet**. Every search shows the same clearly labelled invented example.
 
-## Why ChainSightline?
+<p align="center">
+  <img src="docs/assets/route-light.png" alt="A ChainSightline route in the light theme: a starting point and stops connected by one line" width="49%" />
+  <img src="docs/assets/route-dark.png" alt="The same route in the dark theme" width="49%" />
+</p>
 
-Blockchain data is public, but interpreting it is difficult. A transaction hash alone does not explain contract calls, token approvals or the context behind a transfer.
+## Try it
 
-ChainSightline is designed to make investigations understandable without hiding uncertainty:
+You need [Node.js](https://nodejs.org) 22.12 or newer. Docker is optional.
 
-- **Inspect** an Ethereum address or transaction.
-- **Trace** observed native ETH, token movements and contract calls.
-- **Understand** explainable signals with supporting transactions.
-- **Check** AI explanations against their cited evidence.
+```sh
+git clone https://github.com/sjdsjadjajdjsa/chainsightline.git
+cd chainsightline
+npm install
+```
 
-It will not label an address criminal, infer wallet ownership from a graph connection or call incomplete evidence safe.
+### In your terminal
 
-## Planned workflow
+```sh
+npm run cli -- sample                 # draw the example route
+npm run cli -- trace 0xYourAddress    # paste any address or transaction hash
+npm run cli -- sample --evidence      # include full addresses for every stop
+npm run cli -- sample --json          # machine-readable output
+```
+
+Run `npm link` once to use it as `chainsightline` from anywhere, for example `chainsightline trace 0x…`.
+
+<p align="center">
+  <img src="docs/assets/cli.png" alt="The same route drawn in a terminal, with coloured addresses and the line running down the left" width="80%" />
+</p>
+
+### In your browser, no Docker
+
+```sh
+npm run web          # or: chainsightline web
+```
+
+The first run builds the site, then it opens at `http://127.0.0.1:3000` in your default browser. Press Ctrl+C to stop it. Use `--port 3001` if 3000 is busy and `--no-open` to skip the browser.
+
+### In Docker
+
+```sh
+npm start            # build, wait until healthy, open the browser
+npm stop             # stop without deleting data
+```
+
+The container is read-only, runs as a non-root user and is reachable only from your own computer.
+
+## How it works
 
 ```mermaid
 flowchart LR
-    A["Address or transaction"] --> B["Bounded evidence collection"]
-    B --> C["Receipts, logs and call traces"]
-    C --> D["Versioned rules and sourced labels"]
-    D --> E["Evidence and movement graph"]
-    E --> F["Optional cited AI explanation"]
+    A["Address or transaction"] --> B["Collect evidence<br/>(planned)"]
+    B --> C["Normalise into stops"]
+    C --> D["Explainable warnings"]
+    D --> E["The route<br/>web or terminal"]
+    E --> F["Optional cited<br/>AI explanation"]
 
-    style A fill:#dcefeb,stroke:#3c8d94,color:#10272d
-    style B fill:#dcefeb,stroke:#3c8d94,color:#10272d
-    style C fill:#dcefeb,stroke:#3c8d94,color:#10272d
-    style D fill:#dcefeb,stroke:#3c8d94,color:#10272d
-    style E fill:#dcefeb,stroke:#3c8d94,color:#10272d
-    style F fill:#d9f3e5,stroke:#41a98f,color:#10272d
+    style B fill:#f4f0e6,stroke:#9a4f17,color:#1d2928,stroke-dasharray:4 3
+    style A fill:#e3efe9,stroke:#21685c,color:#1d2928
+    style C fill:#e3efe9,stroke:#21685c,color:#1d2928
+    style D fill:#e3efe9,stroke:#21685c,color:#1d2928
+    style E fill:#e3efe9,stroke:#21685c,color:#1d2928
+    style F fill:#e3efe9,stroke:#21685c,color:#1d2928
 ```
+
+1. You paste an address or transaction hash. It is checked before anything else happens.
+2. **Today** the server returns the invented example. **Planned:** a worker fetches receipts, token transfers and call traces from an Ethereum provider.
+3. Each movement becomes a stop with a plain sentence such as "0.42 ETH left the subject", plus the two addresses colour-coded and labelled by role.
+4. Rules attach warnings to the stop they concern, for example an unlimited token approval. A warning is a reason to look closer, never a verdict.
+5. The route ends with what is still unknown, so missing data never reads as safety.
+6. Optionally, an AI model (Kimi by default, or any compatible OpenRouter model) explains the route. Its answer must cite the evidence or it is rejected.
+
+The website and the terminal share the same evidence format and wording, so both always tell the same story.
 
 ## Product principles
 
@@ -78,29 +119,34 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | Architecture and repository | Reviewed design, private repository and project guidance | Complete |
-| AI provider contract | Model-neutral evidence schema, OpenRouter adapter and offline tests | Initial slice complete |
-| Local browser workspace | Responsive investigation UI, synthetic evidence and health endpoint | Initial preview working |
-| TypeScript foundation | Workspace, database, authentication, jobs and CI | UI started; infrastructure pending |
-| Offline transaction evidence | Synthetic fixtures, normalization and evidence interface | UI fixture only |
-| Live Ethereum investigation | Provider-backed transaction and bounded address history | Not started |
-| Signals and graph | Explainable rules and single-transaction movement graph | Not started |
-| Cited AI analysis | Configurable model summaries over frozen evidence | Adapter smoke tested |
-| Private preview | Security, recovery, evaluation and cost verification | Not started |
+| AI provider contract | Model-neutral evidence schema, OpenRouter adapter and offline tests | Complete for the preview |
+| Sightline website | One-line route design, intro, light and dark themes, mobile layout | Preview working |
+| Terminal command | `chainsightline trace`, `sample` and `web` without Docker | Preview working |
+| Live Ethereum investigation | Provider-backed transaction and bounded address history | Next |
+| Branching routes | One address sending to several, shown on the line | Design needed |
+| Signals | Versioned, explainable rules with labelled test cases | Not started |
+| Cited AI analysis in the app | Configurable model explanations over frozen evidence | Adapter tested |
+| Private preview | Database, jobs, security, recovery and cost checks | Not started |
 
-The detailed [delivery roadmap](docs/plans/2026-11-02-github-roadmap.md) tracks GitHub setup and release gates. The [concept review](docs/reviews/2026-11-02-concept-review.md) records strengths, weaknesses and improvement priorities.
+The detailed [delivery roadmap](docs/plans/2026-11-02-github-roadmap.md) tracks release gates. The [concept review](docs/reviews/2026-11-02-concept-review.md) records strengths, weaknesses and priorities. The [design system](design_system/README.md) explains the visual rules.
 
-## Development and model access
+## Development
 
-Run `npm ci`, then `npm run dev` and open `http://localhost:3000`. For the Docker launcher, run `npm start`; it builds the app, waits for health and opens your default browser. `npm stop` stops services without deleting data. The current preview uses synthetic evidence; no chain provider is required. Verify with `npm test`, `npm run typecheck`, `npm run build` and, while the app is running, `npm run test:browser`. Real environment files are ignored by Git.
+```sh
+npm run dev            # live-reloading website
+npm test               # unit tests for the evidence format, route wording, CLI and AI adapter
+npm run typecheck
+npm run test:browser   # with the site running: phone, laptop and ultrawide checks in both themes
+```
 
-Kimi K3.1 Pro remains the primary development model and default product-analysis model. OpenRouter provides the initial provider-neutral transport; Kimi, OpenAI and Google models passed a small synthetic structured-output compatibility test. Compatible models are supported, not every possible model. No silent fallback or automatic weakening of privacy settings. See [AI provider configuration](docs/ai-providers.md) and the [measured smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md).
+Kimi K3.1 Pro is the primary development model and the default product model. OpenRouter provides the provider-neutral transport; Kimi, OpenAI and Google models passed a small structured-output compatibility test. There is no silent fallback and privacy settings are never weakened automatically. See [AI provider configuration](docs/ai-providers.md) and the [smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md). Real environment files are ignored by Git.
 
 ## Security and release
 
-Not yet publicly released. Licensing, contribution policy, security reporting and tested setup instructions remain release prerequisites. See [security and data-handling notes](SECURITY.md) for design boundaries and reporting guidance.
+Not yet publicly released. A license, contribution policy and private security contact are still needed before the repository goes public. See [security and data-handling notes](SECURITY.md).
 
 No license has been selected. Reuse and redistribution are not currently granted.
 
 ---
 
-*ChainSightline is the selected working identity following preliminary name-conflict checks. Trademark clearance remains a separate public-release step.*
+*ChainSightline is the selected working name following preliminary name-conflict checks. Trademark clearance remains a separate public-release step.*
