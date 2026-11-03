@@ -28,3 +28,9 @@ export function evidenceSummary(movement: Movement, synthetic: boolean) {
   if (movement.kind === "token-transfer" && !synthetic) return "A token transfer event reported by the token contract. Balances, ownership and intent are not checked.";
   return "One " + prefix + kindName[movement.kind].toLowerCase() + ". Ownership and intent are not established.";
 }
+export const etherscanTx = (hash: string) => "https://etherscan.io/tx/" + hash;
+export const etherscanAddress = (address: string) => "https://etherscan.io/address/" + address;
+export const revokeUrl = (owner: string) => "https://revoke.cash/address/" + owner + "?chainId=1";
+export function nameOf(address: string, investigation: Investigation) {
+  return investigation.names?.[address.toLowerCase()]?.name ?? null;
+}

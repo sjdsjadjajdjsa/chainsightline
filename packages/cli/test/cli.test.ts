@@ -38,7 +38,7 @@ test("traces real data with its source and no sample warning", async () => {
   assert.equal(result.code, 0);
   assert.deepEqual(asked, ["transaction", "0x" + "a".repeat(64)]);
   assert.ok(result.out.includes("Read from dRPC free public access."));
-  assert.ok(result.out.includes("Transaction 0x" + "a".repeat(64)));
+  assert.ok(result.out.includes("https://etherscan.io/tx/0x" + "a".repeat(64)));
   assert.ok(!result.out.includes("An invented example"));
 });
 test("strips terminal control sequences from chain data", async () => {

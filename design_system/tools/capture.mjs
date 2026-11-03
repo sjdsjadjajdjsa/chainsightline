@@ -82,6 +82,14 @@ if (process.env.CHAINSIGHTLINE_LIVE_TX) {
   await live.waitForTimeout(800);
   await live.screenshot({ path: out + "live-1440.png", fullPage: true });
   console.log("Live transaction rendered: " + (await live.locator(".trail > li").count() - 2) + " stops");
+  if (!live.url().includes("?tx=" + process.env.CHAINSIGHTLINE_LIVE_TX.toLowerCase())) throw new Error("Address bar was not updated for sharing: " + live.url());
+  const shared = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await shared.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
+  await shared.goto(base + "/?tx=" + process.env.CHAINSIGHTLINE_LIVE_TX);
+  await shared.locator(".stamp", { hasText: "Ethereum mainnet, block" }).waitFor({ timeout: 60000 });
+  await shared.getByRole("button", { name: "Copy link" }).waitFor();
+  if (!(await shared.getByRole("link", { name: /Check or revoke it on revoke.cash/ }).count())) throw new Error("revoke.cash link missing on the approval");
+  console.log("Shared link opened the same investigation");
 }
 if (process.env.CHAINSIGHTLINE_LIVE_ADDRESS) {
   const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

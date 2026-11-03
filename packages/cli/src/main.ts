@@ -8,7 +8,7 @@ import { investigate } from "../../chain/src/investigate";
 import { ChainError, checkKey } from "../../chain/src/rpc";
 import { type Investigation } from "../../core/src/investigation";
 import { sampleInvestigation } from "../../core/src/sample";
-import { asSentence, describeMovement, evidenceSummary, kindName, roleName, roleOf, routeTitle, shortHash, type Role } from "../../core/src/route";
+import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, nameOf, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Role } from "../../core/src/route";
 export const version = "0.1.0";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 export type Io = { out: (text: string) => void; err: (text: string) => void; color: boolean; columns: number };
@@ -46,7 +46,7 @@ export function renderRoute(input: Investigation, options: { color: boolean; col
   const rail = p.line("│");
   const lines: string[] = [];
   const onRail = (text: string, style: (text: string) => string = value => value, indent = "") => wrap(text, width - indent.length).forEach(line => lines.push("  " + rail + "  " + indent + style(line)));
-  const address = (value: string) => { const role: Role = roleOf(value, investigation); return p.dim(roleName[role]) + " " + p[role](shortHash(value)); };
+  const address = (value: string) => { const role: Role = roleOf(value, investigation); const name = nameOf(value, investigation); return p.dim(roleName[role]) + " " + (name ? p[role](name) + " " + p.dim(shortHash(value)) : p[role](shortHash(value))); };
   lines.push("", "  " + p.bold("ChainSightline") + "  " + p.dim("follow the line"), "");
   lines.push("  " + p.bold(routeTitle(investigation.movements.length)));
   if (investigation.synthetic) wrap("An invented example, not real Ethereum data.", width + 3).forEach(line => lines.push("  " + p.warn(line)));
@@ -55,24 +55,29 @@ export function renderRoute(input: Investigation, options: { color: boolean; col
   lines.push("  " + p.line("◉") + "  " + p.dim("Starting point"));
   onRail(investigation.kind === "address" ? "The address you asked about." : "The subject’s account.", p.bold);
   lines.push("  " + rail + "  " + address(investigation.subject));
-  if (investigation.transactionHash) lines.push("  " + rail + "  " + p.dim("Transaction " + investigation.transactionHash));
+  if (investigation.transactionHash) lines.push("  " + rail + "  " + p.dim(etherscanTx(investigation.transactionHash)));
+  else if (!investigation.synthetic) lines.push("  " + rail + "  " + p.dim(etherscanAddress(investigation.subject)));
   onRail(investigation.synthetic ? "Invented Ethereum-style data at block " + investigation.blockNumber + ". " + asSentence(investigation.coverage.summary) : investigation.explanation.summary, p.dim);
   investigation.movements.forEach((movement, index) => {
-    const warning = investigation.warnings.find(item => item.evidenceId === movement.evidenceId);
+    const notes = investigation.warnings.filter(item => item.evidenceId === movement.evidenceId);
+    const warning = notes[0];
+    const txHash = movement.transactionHash ?? investigation.transactionHash;
     const parts = describeMovement(movement, investigation);
     lines.push("  " + rail);
     lines.push("  " + (warning ? p.warn("○") : p.line("○")) + "  " + p.dim("Stop " + (index + 1) + ". " + kindName[movement.kind]));
-    onRail(parts.before + parts.amount + parts.after, p.bold);
+    onRail(parts.before + parts.amount + (movement.usd ? " (" + movement.usd + ")" : "") + parts.after, p.bold);
     lines.push("  " + rail + "  " + address(movement.from) + p.dim(" → ") + address(movement.to));
-    if (warning) {
-      lines.push("  " + p.line("├") + p.warn("──  ! " + asSentence(warning.title)));
-      onRail(warning.reason, p.dim, "    ");
+    for (const note of notes) {
+      lines.push("  " + p.line("├") + p.warn("──  ! " + asSentence(note.title)));
+      onRail(note.reason, p.dim, "    ");
+      if (!investigation.synthetic && movement.kind === "approval" && note === warning) lines.push("  " + rail + "      " + p.dim("Check or revoke: " + revokeUrl(movement.from)));
     }
     if (options.evidence) {
       onRail("Evidence " + movement.evidenceId, p.dim, "    ");
-      if (movement.transactionHash) lines.push("  " + rail + "      " + p.dim("Transaction " + movement.transactionHash));
+      if (!investigation.synthetic && txHash) lines.push("  " + rail + "      " + p.dim(etherscanTx(txHash)));
       onRail("From " + movement.from, p.dim, "    ");
       onRail("To   " + movement.to, p.dim, "    ");
+      if (movement.assetAddress) lines.push("  " + rail + "      " + p.dim("Token " + movement.assetAddress));
       if (movement.rawAmount) onRail("Exact amount " + movement.rawAmount, p.dim, "    ");
       onRail(evidenceSummary(movement, investigation.synthetic), p.dim, "    ");
     }

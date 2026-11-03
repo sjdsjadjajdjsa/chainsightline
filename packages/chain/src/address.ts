@@ -6,11 +6,11 @@ type Movement = Investigation["movements"][number];
 type Transfer = { uniqueId?: string; blockNum: string; hash: string; from: string; to: string | null; value: number | null; asset: string | null; category: string; tokenId?: string | null; erc1155Metadata?: { tokenId: string; value: string }[] | null; rawContract?: { value: string | null; address: string | null; decimal: string | null } };
 type RawBlock = { hash: string; number: string; timestamp: string };
 export const ADDRESS_LIMIT = 20;
-function amountOf(transfer: Transfer) {
+function amountOf(transfer: Transfer): { amount: string; rawAmount?: string; decimals?: number } {
   if (transfer.category === "erc721") return { amount: "#" + toBigInt(transfer.tokenId ?? undefined).toString() };
   if (transfer.category === "erc1155") { const items = transfer.erc1155Metadata ?? []; const item = items[0]; return { amount: item ? toBigInt(item.value).toString() + " of #" + toBigInt(item.tokenId).toString() + (items.length > 1 ? " and " + (items.length - 1) + " more of" : "") : "some" }; }
   const raw = transfer.rawContract;
-  if (raw?.value && raw.decimal) { const value = toBigInt(raw.value); const decimals = Number(toBigInt(raw.decimal)); return { amount: decimals <= 36 ? formatUnits(value, decimals) : value.toLocaleString("en-US") + " units of", rawAmount: value.toString() + " base units" }; }
+  if (raw?.value && raw.decimal) { const value = toBigInt(raw.value); const decimals = Number(toBigInt(raw.decimal)); return decimals <= 36 ? { amount: formatUnits(value, decimals), rawAmount: value.toString() + " base units", decimals } : { amount: value.toLocaleString("en-US") + " units of", rawAmount: value.toString() + " base units" }; }
   return { amount: transfer.value === null ? "an unknown amount of" : String(transfer.value) };
 }
 export async function investigateAddress(address: string, rpc: Rpc): Promise<Investigation> {
@@ -27,8 +27,10 @@ export async function investigateAddress(address: string, rpc: Rpc): Promise<Inv
     const nft = transfer.category === "erc721" || transfer.category === "erc1155";
     const contract = transfer.rawContract?.address;
     const shown = amountOf(transfer);
-    const movement: Movement = { id: "transfer-" + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? (contract ? (nft ? "NFT from " : "tokens from ") + shortHash(contract) : nft ? "NFT" : "tokens"), amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : nft ? "NFT transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", transaction " + transfer.hash.slice(0, 10) + "…", transactionHash: transfer.hash.toLowerCase() };
+    const movement: Movement = { id: "transfer-" + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? (contract ? (nft ? "NFT from " : "tokens from ") + shortHash(contract) : nft ? "NFT" : "tokens"), amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : nft ? "NFT transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", " + (transfer.uniqueId ?? transfer.hash).replace(transfer.hash, "transaction " + transfer.hash.slice(0, 10) + "…").replace(/:/g, " ").replace(/\s+/g, " ").trim() + (transfer.uniqueId ? "" : " " + index), transactionHash: transfer.hash.toLowerCase() };
     if (shown.rawAmount) movement.rawAmount = shown.rawAmount;
+    if (shown.decimals !== undefined) movement.decimals = shown.decimals;
+    if (contract && /^0x[0-9a-fA-F]{40}$/.test(contract)) movement.assetAddress = contract.toLowerCase();
     return movement;
   });
   const limitations = [

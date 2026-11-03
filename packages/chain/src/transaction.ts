@@ -50,11 +50,11 @@ export async function investigateTransaction(hash: string, rpc: Rpc): Promise<In
   const limitations: string[] = ["This covers one transaction; what these accounts did before or after is not shown"];
   const value = toBigInt(tx.value);
   const target = (tx.to ?? receipt.contractAddress ?? "").toLowerCase();
-  if (!failed && value > 0n && target) movements.push({ id: "native-0", kind: "native-transfer", from: subject, to: target, asset: "ETH", amount: formatUnits(value, 18), rawAmount: value.toString() + " wei", description: "ETH sent with the transaction", evidenceId: "transaction value" });
+  if (!failed && value > 0n && target) movements.push({ id: "native-0", kind: "native-transfer", from: subject, to: target, asset: "ETH", amount: formatUnits(value, 18), rawAmount: value.toString() + " wei", decimals: 18, description: "ETH sent with the transaction", evidenceId: "transaction value" });
   let traceMovements = 0;
   if (trace && !failed) for (const { frame, path } of internalTransfers(trace)) {
     const amount = toBigInt(frame.value);
-    movements.push({ id: "call-" + path, kind: "native-transfer", from: (frame.from ?? subject).toLowerCase(), to: frame.to!.toLowerCase(), asset: "ETH", amount: formatUnits(amount, 18), rawAmount: amount.toString() + " wei", description: "ETH moved inside the transaction", evidenceId: "call trace " + path });
+    movements.push({ id: "call-" + path, kind: "native-transfer", from: (frame.from ?? subject).toLowerCase(), to: frame.to!.toLowerCase(), asset: "ETH", amount: formatUnits(amount, 18), rawAmount: amount.toString() + " wei", decimals: 18, description: "ETH moved inside the transaction", evidenceId: "call trace " + path });
     traceMovements++;
   }
   if (!trace && !failed) limitations.push("ETH moved between contracts inside the transaction could not be checked, because no call trace was available");
@@ -81,21 +81,23 @@ export async function investigateTransaction(hash: string, rpc: Rpc): Promise<In
     if (topic === TRANSFER) {
       if (log.topics.length === 3 && isWord(log.data)) {
         const amount = toBigInt(log.data);
-        movements.push({ id: "log-" + index, kind: "token-transfer", from: first, to: second, asset: symbol, amount: token.decimals === null ? amount.toLocaleString("en-US") + " units of" : formatUnits(amount, token.decimals), rawAmount: amount.toString() + " base units", description: "Token transfer event", evidenceId });
+        const movement: Movement = { id: "log-" + index, kind: "token-transfer", from: first, to: second, asset: symbol, assetAddress: contract, amount: token.decimals === null ? amount.toLocaleString("en-US") + " units of" : formatUnits(amount, token.decimals), rawAmount: amount.toString() + " base units", description: "Token transfer event", evidenceId };
+        if (token.decimals !== null) movement.decimals = token.decimals;
+        movements.push(movement);
       } else if (log.topics.length === 4) {
-        movements.push({ id: "log-" + index, kind: "token-transfer", from: first, to: second, asset: symbol, amount: "#" + toBigInt(log.topics[3]).toString(), description: "NFT transfer event", evidenceId });
+        movements.push({ id: "log-" + index, kind: "token-transfer", from: first, to: second, asset: symbol, assetAddress: contract, amount: "#" + toBigInt(log.topics[3]).toString(), description: "NFT transfer event", evidenceId });
       } else skipped++;
     } else if (topic === APPROVAL && log.topics.length === 3 && isWord(log.data)) {
       const amount = toBigInt(log.data);
       if (amount === 0n) { revoked++; continue; }
       const unlimited = amount >= UNLIMITED;
-      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, amount: unlimited ? "Unlimited" : token.decimals === null ? amount.toLocaleString("en-US") + " units of" : formatUnits(amount, token.decimals), rawAmount: amount.toString() + " base units", description: "Token approval event", evidenceId });
+      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, assetAddress: contract, amount: unlimited ? "Unlimited" : token.decimals === null ? amount.toLocaleString("en-US") + " units of" : formatUnits(amount, token.decimals), rawAmount: amount.toString() + " base units", description: "Token approval event", evidenceId });
       if (unlimited) warnings.push({ id: "warning-" + index, title: "Unlimited approval", reason: "The spender " + shortHash(second) + " may move any amount of this token from " + shortHash(first) + " until the approval is changed. Exchanges often ask for this, but it is worth checking that you trust the spender. Whether it was revoked later is not checked here.", evidenceId, severity: "review" });
     } else if (topic === APPROVAL && log.topics.length === 4) {
-      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, amount: "#" + toBigInt(log.topics[3]).toString(), description: "NFT approval event", evidenceId });
+      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, assetAddress: contract, amount: "#" + toBigInt(log.topics[3]).toString(), description: "NFT approval event", evidenceId });
     } else if (topic === APPROVAL_FOR_ALL && log.topics.length === 3 && isWord(log.data)) {
       if (toBigInt(log.data) === 0n) { revoked++; continue; }
-      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, amount: "every token in", description: "Collection-wide approval event", evidenceId });
+      movements.push({ id: "log-" + index, kind: "approval", from: first, to: second, asset: symbol, assetAddress: contract, amount: "every token in", description: "Collection-wide approval event", evidenceId });
       warnings.push({ id: "warning-" + index, title: "Approval for a whole collection", reason: "The operator " + shortHash(second) + " may move every token in this collection from " + shortHash(first) + " until the approval is changed. Marketplaces ask for this, but so do many scams. Whether it was revoked later is not checked here.", evidenceId, severity: "review" });
     } else skipped++;
   }
