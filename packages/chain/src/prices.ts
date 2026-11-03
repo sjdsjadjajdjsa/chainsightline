@@ -13,6 +13,7 @@ export function units(movement: Movement) {
   return Number(raw) / 10 ** movement.decimals;
 }
 export function formatUsd(value: number) {
+  if (value === 0) return "$0";
   if (value < 0.01) return "less than $0.01";
   return "about $" + value.toLocaleString("en-US", { maximumFractionDigits: value < 1000 ? 2 : 0, minimumFractionDigits: value < 1000 ? 2 : 0 });
 }
@@ -21,7 +22,7 @@ export async function priceMovements(investigation: Investigation, fetcher: type
   const coins = [...new Set(investigation.movements.filter(movement => units(movement) !== null).map(coinOf).filter((coin): coin is string => coin !== null))].slice(0, 60);
   if (!coins.length) return null;
   const basis = investigation.kind === "transaction" ? "at the time" as const : "today" as const;
-  const timestamp = Math.floor(Date.parse(investigation.observedAt) / 1000);
+  const timestamp = Math.floor(Date.parse(investigation.observedAt) / 3600000) * 3600;
   const url = "https://coins.llama.fi/prices/" + (basis === "at the time" && Number.isFinite(timestamp) ? "historical/" + timestamp + "/" : "current/") + coins.join(",") + "?searchWidth=4h";
   let prices: Record<string, { price?: unknown; confidence?: unknown }>;
   try {

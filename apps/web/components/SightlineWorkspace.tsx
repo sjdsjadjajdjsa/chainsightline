@@ -2,17 +2,20 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRight, LoaderCircle, Moon, Sun } from "lucide-react";
 import { investigationSchema, type Investigation } from "../../../packages/core/src/investigation";
-import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, nameOf, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Movement } from "../../../packages/core/src/route";
+import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, lookalikeAddresses, nameOf, nameSource, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Movement } from "../../../packages/core/src/route";
 import { Brand } from "./Brand";
 import { KeysPanel, type Settings } from "./KeysPanel";
 function Address({ value, investigation }: { value: string; investigation: Investigation }) {
   const role = roleOf(value, investigation);
   const name = nameOf(value, investigation);
-  return <span className={"address address-" + role} title={value}><span className="address-role">{roleName[role]}</span>{name ? <><span className="address-hash address-name">{name}</span><span className="address-short">{shortHash(value)}</span></> : <span className="address-hash">{shortHash(value)}</span>}</span>;
+  const source = nameSource(value, investigation);
+  const hash = lookalikeAddresses(investigation).has(value) ? value : shortHash(value);
+  if (name && source === "known") return <span className={"address address-" + role} title={value}><span className="address-role">{roleName[role]}</span><span className="address-hash address-name">{name}</span><span className="address-short">{hash}</span></span>;
+  return <span className={"address address-" + role} title={value}><span className="address-role">{roleName[role]}</span><span className={"address-hash" + (hash === value ? " address-full" : "")}>{hash}</span>{name && <span className="address-short" title="ENS names are chosen by the address owner and can imitate other names">{name} (ENS)</span>}</span>;
 }
 function Headline({ movement, investigation }: { movement: Movement; investigation: Investigation }) {
   const parts = describeMovement(movement, investigation);
-  return <>{parts.before}<span className="amount">{parts.amount}</span>{movement.usd && <span className="usd"> ({movement.usd})</span>}{parts.after}</>;
+  return <>{parts.before}<span className="amount">{parts.amount}</span>{movement.usd && <span className="usd"> ({movement.usd}{investigation.prices ? " " + investigation.prices.basis : ""})</span>}{parts.after}</>;
 }
 type Failure = { text: string; input: boolean; attempt: number; needsKey: boolean };
 export function SightlineWorkspace({ initial }: { initial: Investigation }) {
@@ -27,14 +30,15 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [showKeys, setShowKeys] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [fromLink, setFromLink] = useState(false);
   const routeHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { setDark(document.documentElement.dataset.theme === "dark"); }, []);
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tx = params.get("tx");
     const address = params.get("address");
-    if (tx && /^0x[0-9a-fA-F]{64}$/.test(tx)) { setKind("transaction"); setQuery(tx); load({ kind: "transaction", value: tx }); }
-    else if (address && /^0x[0-9a-fA-F]{40}$/.test(address)) { setKind("address"); setQuery(address); load({ kind: "address", value: address }); }
+    if (tx && /^0x[0-9a-fA-F]{64}$/.test(tx)) { setKind("transaction"); setQuery(tx); setFromLink(true); }
+    else if (address && /^0x[0-9a-fA-F]{40}$/.test(address)) { setKind("address"); setQuery(address); setFromLink(true); }
   }, []);
   useEffect(() => { fetch("/api/settings").then(response => response.ok ? response.json() : null).then(body => { if (body) setSettings(body as Settings); }).catch(() => undefined); }, []);
   function toggleTheme() {
@@ -56,6 +60,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
   }
   async function load(payload: object) {
     setError(null);
+    setFromLink(false);
     setLoading(true);
     try {
       const response = await fetch("/api/investigations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -98,6 +103,7 @@ export function SightlineWorkspace({ initial }: { initial: Investigation }) {
           </div>
           <div id={uid + "-message"}>
             {error && <p key={error.attempt} className="search-error" role="alert">{error.text} {error.needsKey && <button type="button" className="text-button" onClick={() => setShowKeys(true)}>Add an Alchemy key</button>}</p>}
+            {fromLink && <p className="search-link-note">Opened from a link. Press <strong>Follow the line</strong> to look it up.</p>}
             <p className="search-hint">
               {settings ? <>Reading from {settings.primary}{settings.addressHistory ? ", with address history from Alchemy" : ""}. </> : null}
               <button type="button" className="text-button" aria-expanded={showKeys} aria-controls={uid + "-keys"} onClick={() => setShowKeys(!showKeys)}>{showKeys ? "Hide your keys" : "Your keys"}</button>

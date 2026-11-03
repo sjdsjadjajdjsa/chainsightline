@@ -8,7 +8,7 @@ import { investigate } from "../../chain/src/investigate";
 import { ChainError, checkKey } from "../../chain/src/rpc";
 import { type Investigation } from "../../core/src/investigation";
 import { sampleInvestigation } from "../../core/src/sample";
-import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, nameOf, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Role } from "../../core/src/route";
+import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, lookalikeAddresses, nameOf, nameSource, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Role } from "../../core/src/route";
 export const version = "0.1.0";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 export type Io = { out: (text: string) => void; err: (text: string) => void; color: boolean; columns: number };
@@ -46,7 +46,8 @@ export function renderRoute(input: Investigation, options: { color: boolean; col
   const rail = p.line("│");
   const lines: string[] = [];
   const onRail = (text: string, style: (text: string) => string = value => value, indent = "") => wrap(text, width - indent.length).forEach(line => lines.push("  " + rail + "  " + indent + style(line)));
-  const address = (value: string) => { const role: Role = roleOf(value, investigation); const name = nameOf(value, investigation); return p.dim(roleName[role]) + " " + (name ? p[role](name) + " " + p.dim(shortHash(value)) : p[role](shortHash(value))); };
+  const twins = lookalikeAddresses(investigation);
+  const address = (value: string) => { const role: Role = roleOf(value, investigation); const name = nameOf(value, investigation); const hash = twins.has(value) ? value : shortHash(value); if (name && nameSource(value, investigation) === "known") return p.dim(roleName[role]) + " " + p[role](name) + " " + p.dim(hash); return p.dim(roleName[role]) + " " + p[role](hash) + (name ? " " + p.dim(name + " (ENS)") : ""); };
   lines.push("", "  " + p.bold("ChainSightline") + "  " + p.dim("follow the line"), "");
   lines.push("  " + p.bold(routeTitle(investigation.movements.length)));
   if (investigation.synthetic) wrap("An invented example, not real Ethereum data.", width + 3).forEach(line => lines.push("  " + p.warn(line)));
@@ -65,7 +66,7 @@ export function renderRoute(input: Investigation, options: { color: boolean; col
     const parts = describeMovement(movement, investigation);
     lines.push("  " + rail);
     lines.push("  " + (warning ? p.warn("○") : p.line("○")) + "  " + p.dim("Stop " + (index + 1) + ". " + kindName[movement.kind]));
-    onRail(parts.before + parts.amount + (movement.usd ? " (" + movement.usd + ")" : "") + parts.after, p.bold);
+    onRail(parts.before + parts.amount + (movement.usd ? " (" + movement.usd + (investigation.prices ? " " + investigation.prices.basis : "") + ")" : "") + parts.after, p.bold);
     lines.push("  " + rail + "  " + address(movement.from) + p.dim(" → ") + address(movement.to));
     for (const note of notes) {
       lines.push("  " + p.line("├") + p.warn("──  ! " + asSentence(note.title)));

@@ -72,6 +72,7 @@ await invalid.getByRole("button", { name: "Follow the line" }).click();
 await invalid.getByText("Enter a valid Ethereum address or transaction hash").waitFor();
 const health = await invalid.request.get(base + "/api/health");
 if (!health.ok()) throw new Error("Health check failed");
+if (health.headers()["x-frame-options"] !== "DENY" || !String(health.headers()["content-security-policy"]).includes("frame-ancestors 'none'")) throw new Error("Framing protection headers missing");
 if (process.env.CHAINSIGHTLINE_LIVE_TX) {
   const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await live.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
@@ -85,7 +86,10 @@ if (process.env.CHAINSIGHTLINE_LIVE_TX) {
   if (!live.url().includes("?tx=" + process.env.CHAINSIGHTLINE_LIVE_TX.toLowerCase())) throw new Error("Address bar was not updated for sharing: " + live.url());
   const shared = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await shared.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
-  await shared.goto(base + "/?tx=" + process.env.CHAINSIGHTLINE_LIVE_TX);
+  await shared.goto(base + "/?tx=" + process.env.CHAINSIGHTLINE_LIVE_TX, { waitUntil: "networkidle" });
+  await shared.getByText("Opened from a link.").waitFor();
+  if (await shared.locator(".stamp", { hasText: "Ethereum mainnet" }).count()) throw new Error("A link looked up data without a click");
+  await shared.getByRole("button", { name: "Follow the line" }).click();
   await shared.locator(".stamp", { hasText: "Ethereum mainnet, block" }).waitFor({ timeout: 60000 });
   await shared.getByRole("button", { name: "Copy link" }).waitFor();
   if (!(await shared.getByRole("link", { name: /Check or revoke it on revoke.cash/ }).count())) throw new Error("revoke.cash link missing on the approval");

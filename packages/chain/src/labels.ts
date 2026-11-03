@@ -32,6 +32,8 @@ export const knownAddresses: Record<string, string> = {
   "0x2910543af39aba0cd09dbb2d50200b3e800a63d2": "Kraken",
   "0x267be1c1d684f78cb4f6a176c4911b741e4ffdc0": "Kraken",
   "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b": "Tornado Cash Router",
+  "0x9008d19f58aabd9ed0d60971565aa8510560ab41": "CoW Protocol settlement",
+  "0x6000da47483062a0d734ba3dc7576ce6a0b645c4": "UniswapX reactor",
 };
 export const officialTokens: Record<string, string> = {
   usdt: "0xdac17f958d2ee523a2206206994597c13d831ec7",
@@ -52,7 +54,7 @@ export async function resolveNames(investigation: Investigation, rpc: Rpc, timeo
   const names: NonNullable<Investigation["names"]> = {};
   const addresses = addressesIn(investigation);
   for (const address of addresses) { const known = knownAddresses[address]; if (known) names[address] = { name: known, source: "known" }; }
-  const client = createPublicClient({ chain: mainnet, transport: custom({ request: ({ method, params }: { method: string; params?: unknown }) => rpc.call(method, Array.isArray(params) ? params : []) }) });
+  const client = createPublicClient({ chain: mainnet, ccipRead: false, transport: custom({ request: ({ method, params }: { method: string; params?: unknown }) => rpc.call(method, Array.isArray(params) ? params : []) }) });
   const lookups = addresses.filter(address => !names[address]).slice(0, ENS_LIMIT).map(async address => {
     try {
       const name = await client.getEnsName({ address: address as `0x${string}` });
@@ -60,5 +62,5 @@ export async function resolveNames(investigation: Investigation, rpc: Rpc, timeo
     } catch {}
   });
   await Promise.race([Promise.all(lookups), new Promise(resolve => setTimeout(resolve, timeoutMs))]);
-  return names;
+  return { ...names };
 }

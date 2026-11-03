@@ -36,6 +36,7 @@ export async function investigateAddress(address: string, rpc: Rpc): Promise<Inv
   const limitations = [
     "Showing the " + (movements.length === ADDRESS_LIMIT ? ADDRESS_LIMIT + " most recent" : movements.length) + " transfers in and out of this address; older history is not included",
     "Approvals and other contract activity are not part of address history",
+    "Zero-value transfers, a common address-poisoning trick, are hidden from address history",
     "Token transfers and names are reported by the token contracts themselves; a contract can report fake transfers, and balances are not checked",
     "Nothing here shows who controls these accounts or why they transacted",
   ];

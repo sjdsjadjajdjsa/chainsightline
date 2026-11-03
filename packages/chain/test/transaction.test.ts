@@ -117,5 +117,7 @@ test("formats amounts and token names safely", () => {
   assert.equal(decodeText(symbolData), "USDC");
   assert.equal(decodeText("0x" + Buffer.from("DAI").toString("hex").padEnd(64, "0")), "DAI");
   assert.equal(decodeText("0x1234"), null);
+  const longName = "Visit zk-claim.com to claim your 500 USD bonus now before it expires today";
+  assert.equal(decodeText("0x" + word("20") + word(Buffer.byteLength(longName).toString(16)) + Buffer.from(longName).toString("hex").padEnd(192, "0")), longName);
   assert.equal(decodeText("0x" + Buffer.from("\u001b[2JX").toString("hex").padEnd(64, "0")), "[2JX");
 });
