@@ -16,6 +16,8 @@ services:
       CHAINSIGHTLINE_STORAGE: docker
       DRPC_KEY: ${DRPC_KEY:-}
       ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
     volumes:
       - chainsightline-config:/config
     init: true

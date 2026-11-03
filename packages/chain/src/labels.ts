@@ -34,6 +34,8 @@ export const knownAddresses: Record<string, string> = {
   "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b": "Tornado Cash Router",
   "0x9008d19f58aabd9ed0d60971565aa8510560ab41": "CoW Protocol settlement",
   "0x6000da47483062a0d734ba3dc7576ce6a0b645c4": "UniswapX reactor",
+  "0xc92e8bdf79f0507f65a392b0ab4667716bfe0110": "CoW Protocol vault relayer",
+  "0x1e0049783f008a0085193e00003d00cd54003c71": "OpenSea conduit",
 };
 export const officialTokens: Record<string, string> = {
   usdt: "0xdac17f958d2ee523a2206206994597c13d831ec7",
@@ -43,18 +45,23 @@ export const officialTokens: Record<string, string> = {
   wbtc: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
   steth: "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
 };
+export const knownSpenders = ["0x000000000022d473030f116ddee9f6b43ac78ba3", "0x7a250d5630b4cf539739df2c5dacb4c659f2488d", "0xe592427a0aece92de3edee1f18e0157c05861564", "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad", "0x66a9893cc07d91d95644aedd05d03f95e1dba8af", "0x1111111254eeb25477b68fb85ed929f73a960582", "0x111111125421ca6dc452d289314280a0f8842a65", "0xdef1c0ded9bec7f1a1670819833240f027b25eff", "0xc92e8bdf79f0507f65a392b0ab4667716bfe0110", "0x1e0049783f008a0085193e00003d00cd54003c71", "0x00000000000000adc04c56bf30ac9d3c0aaf14dc", "0x0000000000000068f116a894984e2db1123eb395"];
 export const ENS_LIMIT = 25;
 const safeName = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.eth$/;
 export function addressesIn(investigation: Investigation) {
   const counts = new Map<string, number>([[investigation.subject, 1000]]);
+  if (investigation.from) counts.set(investigation.from, 999);
   for (const movement of investigation.movements) for (const address of [movement.from, movement.to]) counts.set(address, (counts.get(address) ?? 0) + 1);
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([address]) => address);
+}
+export function viemClient(rpc: Rpc) {
+  return createPublicClient({ chain: mainnet, ccipRead: false, transport: custom({ request: ({ method, params }: { method: string; params?: unknown }) => rpc.call(method, Array.isArray(params) ? params : []) }) });
 }
 export async function resolveNames(investigation: Investigation, rpc: Rpc, timeoutMs = 6000) {
   const names: NonNullable<Investigation["names"]> = {};
   const addresses = addressesIn(investigation);
   for (const address of addresses) { const known = knownAddresses[address]; if (known) names[address] = { name: known, source: "known" }; }
-  const client = createPublicClient({ chain: mainnet, ccipRead: false, transport: custom({ request: ({ method, params }: { method: string; params?: unknown }) => rpc.call(method, Array.isArray(params) ? params : []) }) });
+  const client = viemClient(rpc);
   const lookups = addresses.filter(address => !names[address]).slice(0, ENS_LIMIT).map(async address => {
     try {
       const name = await client.getEnsName({ address: address as `0x${string}` });

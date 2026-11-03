@@ -94,6 +94,46 @@ if (process.env.CHAINSIGHTLINE_LIVE_TX) {
   await shared.getByRole("button", { name: "Copy link" }).waitFor();
   if (!(await shared.getByRole("link", { name: /Check or revoke it on revoke.cash/ }).count())) throw new Error("revoke.cash link missing on the approval");
   console.log("Shared link opened the same investigation");
+  await shared.locator(".stop-route .address-follow").first().click();
+  await shared.locator(".stop-title", { hasText: "The address you asked about." }).waitFor({ timeout: 60000 });
+  if (!shared.url().includes("?address=")) throw new Error("Following an address did not update the link");
+  await shared.goBack();
+  await shared.locator(".stamp", { hasText: "Ethereum mainnet" }).waitFor({ timeout: 60000 });
+  await shared.locator(".stop-title", { hasText: "The subject’s account." }).waitFor({ timeout: 60000 });
+  console.log("Following an address and going back both work");
+  const guard = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await guard.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
+  await guard.goto(base + "/?checkup=0xd8da6bf26964af9d7eed9e03e53415d37aa96045", { waitUntil: "networkidle" });
+  await guard.getByRole("button", { name: "See an invented example" }).click();
+  await guard.waitForURL(base + "/");
+  await guard.goBack();
+  await guard.getByText("Opened from a link.").waitFor();
+  if (await guard.getByRole("heading", { name: "Your wallet.", exact: true }).count()) throw new Error("Going back ran a link without a click");
+  console.log("Going back to an outside link still waits for a click");
+  if (process.env.CHAINSIGHTLINE_LIVE_AI === "1") {
+    await shared.getByRole("button", { name: "Explain this with AI" }).click();
+    await shared.locator(".ai-summary").waitFor({ timeout: 180000 });
+    if (!(await shared.locator(".ai .citation").count())) throw new Error("AI explanation has no clickable citations");
+    await shared.locator(".ai").scrollIntoViewIfNeeded();
+    await shared.screenshot({ path: out + "ai-1440.png" });
+    console.log("AI explanation rendered with citations");
+  }
+  const check = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await check.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
+  await check.goto(base, { waitUntil: "networkidle" });
+  await check.getByRole("button", { name: "Before you send" }).click();
+  await check.getByRole("textbox", { name: /address you’re about to pay/ }).fill("0xdac17f958d2ee523a2206206994597c13d831ec7");
+  await check.getByRole("textbox", { name: /Your own address/ }).fill("0xd8da6bf26964af9d7eed9e03e53415d37aa96045");
+  await check.getByRole("button", { name: "Check this address" }).click();
+  await check.locator(".check-review .stop-title", { hasText: "This is a token contract." }).waitFor({ timeout: 60000 });
+  await check.screenshot({ path: out + "check-1440.png", fullPage: true });
+  console.log("Before-you-send check flagged a token contract");
+  await check.getByRole("button", { name: "Wallet checkup" }).click();
+  await check.getByRole("textbox").first().fill(process.env.CHAINSIGHTLINE_LIVE_ADDRESS ?? "0xd8da6bf26964af9d7eed9e03e53415d37aa96045");
+  await check.getByRole("button", { name: "Check my wallet" }).click();
+  await check.getByRole("heading", { name: "Your wallet.", exact: true }).waitFor({ timeout: 90000 });
+  await check.screenshot({ path: out + "checkup-1440.png", fullPage: true });
+  console.log("Wallet checkup rendered: " + (await check.locator(".trail > li").count() - 2) + " stops");
 }
 if (process.env.CHAINSIGHTLINE_LIVE_ADDRESS) {
   const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

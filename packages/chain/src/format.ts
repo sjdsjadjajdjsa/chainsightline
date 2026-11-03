@@ -2,7 +2,7 @@ export function toBigInt(value: unknown) {
   if (typeof value !== "string" || value.length > 66 || !/^0x[0-9a-fA-F]*$/.test(value)) return 0n;
   return value === "0x" ? 0n : BigInt(value);
 }
-export const UNLIMITED = 2n ** 255n;
+export const UNLIMITED = 2n ** 96n - 1n;
 export function formatUnits(value: bigint, decimals: number, maxFraction = 6) {
   const base = 10n ** BigInt(decimals);
   const whole = value / base;

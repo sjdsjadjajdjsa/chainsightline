@@ -12,6 +12,9 @@ function fakeDeps(overrides: Partial<Deps> = {}) {
   const saved: Record<string, string | null> = {};
   const deps: Deps = {
     investigate: async () => live,
+    checkBeforeSend: async (recipient, from) => ({ ...live, id: "check", kind: "check", subject: recipient, ...(from ? { from } : {}), movements: [], warnings: [], checks: [{ id: "account", status: "review", title: "This is a token contract", detail: "Tokens sent here are lost." }, { id: "history", status: "ok", title: "No lookalikes in your history", detail: "None match." }] }),
+    checkup: async address => ({ ...live, id: "checkup", kind: "checkup", subject: address }),
+    explain: async () => ({ summary: "The subject sent ETH (stop-1).", uncertainty: "Ownership is unknown.", citations: ["stop-1"], model: "moonshotai/kimi-k3.1-pro", provider: "Moonshot AI", costUsd: 0.0087 }),
     resolveKeys: async () => ({ keys: {}, sources: {} }),
     saveKey: async (name, value) => { saved[name] = value; },
     checkKey: async (_name, value) => value.startsWith("good") ? { ok: true } : { ok: false, message: "That key didn’t work" },
@@ -82,6 +85,28 @@ test("keys shows status and removes saved keys", async () => {
   assert.match(status.out, /Alchemy\s+not set\s+needed for address history/);
   assert.equal((await capture(["keys", "remove", "drpc"], deps)).code, 0);
   assert.equal(saved.drpc, null);
+});
+test("checks an address before sending and prints the checks", async () => {
+  const result = await capture(["check", "0x" + "cd".repeat(20), "--from", "0x" + "ef".repeat(20)]);
+  assert.equal(result.code, 0);
+  for (const text of ["1 thing to check before you send.", "The address you’re about to pay.", "Compared with", "Check 1. Look closer", "This is a token contract.", "Check 2. Looks fine"]) assert.ok(result.out.includes(text), text);
+  assert.equal((await capture(["check", "0x123"])).code, 2);
+  assert.equal((await capture(["check", "0x" + "cd".repeat(20), "--from", "nope"])).code, 2);
+});
+test("runs a wallet checkup and adds an AI explanation on request", async () => {
+  const result = await capture(["checkup", "0x" + "cd".repeat(20), "--explain"]);
+  assert.equal(result.code, 0);
+  assert.ok(result.out.includes("Your wallet."));
+  assert.ok(result.out.includes("AI explanation"));
+  assert.ok(result.out.includes("The subject sent ETH (stop-1)."));
+  assert.ok(result.out.includes("moonshotai/kimi-k3.1-pro"));
+  const json = JSON.parse((await capture(["trace", "0x" + "a".repeat(64), "--json", "--explain"])).out);
+  assert.equal(json.aiExplanation.citations[0], "stop-1");
+});
+test("prints MCP settings for AI apps", async () => {
+  const result = await capture(["mcp", "--print-config"]);
+  const config = JSON.parse(result.out.slice(0, result.out.indexOf("\n\n")));
+  assert.deepEqual(config.mcpServers.chainsightline.args.slice(-1), ["mcp"]);
 });
 test("shows evidence, help and version", async () => {
   assert.ok((await capture(["sample", "--evidence"])).out.includes("From 0x1111111111111111111111111111111111111111"));

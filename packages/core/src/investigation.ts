@@ -6,7 +6,8 @@ export const movementSchema = z.object({ id: z.string(), kind: z.enum(["native-t
 export const investigationSchema = z.object({
   id: z.string(),
   synthetic: z.boolean(),
-  kind: z.enum(["sample", "transaction", "address"]),
+  kind: z.enum(["sample", "transaction", "address", "check", "checkup"]),
+  from: addressSchema.optional(),
   chain: z.literal("ethereum-mainnet"),
   subject: addressSchema,
   transactionHash: transactionHashSchema.optional(),
@@ -19,6 +20,7 @@ export const investigationSchema = z.object({
   movements: z.array(movementSchema),
   warnings: z.array(z.object({ id: z.string(), title: z.string(), reason: z.string(), evidenceId: z.string(), severity: z.enum(["review", "information"]) })),
   explanation: z.object({ summary: z.string(), uncertainty: z.string(), evidenceIds: z.array(z.string()) }),
+  checks: z.array(z.object({ id: z.string(), status: z.enum(["ok", "review", "unknown"]), title: z.string(), detail: z.string() })).optional(),
   names: z.record(z.string(), z.object({ name: z.string().max(80), source: z.enum(["ens", "known"]) })).optional(),
   prices: z.object({ source: z.string(), basis: z.enum(["at the time", "today"]) }).optional(),
 }).strict();

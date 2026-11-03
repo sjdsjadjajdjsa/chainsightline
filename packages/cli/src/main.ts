@@ -4,11 +4,12 @@ import { createRequire } from "node:module";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { extractKey, keyLabel, keyNames, keysFile, resolveKeys, saveKey, type KeyName } from "../../chain/src/config";
-import { investigate } from "../../chain/src/investigate";
+import { explainInvestigation, type Explanation } from "../../chain/src/explain";
+import { checkBeforeSend, checkup, investigate } from "../../chain/src/investigate";
 import { ChainError, checkKey } from "../../chain/src/rpc";
 import { type Investigation } from "../../core/src/investigation";
 import { sampleInvestigation } from "../../core/src/sample";
-import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, lookalikeAddresses, nameOf, nameSource, revokeUrl, roleName, roleOf, routeTitle, shortHash, type Role } from "../../core/src/route";
+import { asSentence, describeMovement, etherscanAddress, etherscanTx, evidenceSummary, kindName, lookalikeAddresses, nameOf, nameSource, revokeUrl, roleLabel, roleOf, shortHash, startTitle, titleFor, type Role } from "../../core/src/route";
 export const version = "0.1.0";
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 export type Io = { out: (text: string) => void; err: (text: string) => void; color: boolean; columns: number };
@@ -20,7 +21,7 @@ const defaultIo = (): Io => ({
 });
 function paint(color: boolean) {
   const style = (code: string) => (text: string) => color ? "\u001b[" + code + "m" + text + "\u001b[0m" : text;
-  return { line: style("36"), subject: style("1;36"), counterparty: style("1;35"), spender: style("1;34"), warn: style("33"), dim: style("2"), bold: style("1") };
+  return { line: style("36"), you: style("1"), subject: style("1;36"), counterparty: style("1;35"), spender: style("1;34"), warn: style("33"), dim: style("2"), bold: style("1") };
 }
 function wrap(text: string, width: number) {
   const lines: string[] = [];
@@ -39,7 +40,7 @@ function sanitize<T>(value: T): T {
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitize(item)])) as T;
   return value;
 }
-export function renderRoute(input: Investigation, options: { color: boolean; columns: number; evidence: boolean }) {
+export function renderRoute(input: Investigation, options: { color: boolean; columns: number; evidence: boolean; explanation?: Explanation | undefined }) {
   const investigation = sanitize(input);
   const p = paint(options.color);
   const width = Math.max(40, Math.min(options.columns, 96) - 8);
@@ -47,25 +48,41 @@ export function renderRoute(input: Investigation, options: { color: boolean; col
   const lines: string[] = [];
   const onRail = (text: string, style: (text: string) => string = value => value, indent = "") => wrap(text, width - indent.length).forEach(line => lines.push("  " + rail + "  " + indent + style(line)));
   const twins = lookalikeAddresses(investigation);
-  const address = (value: string) => { const role: Role = roleOf(value, investigation); const name = nameOf(value, investigation); const hash = twins.has(value) ? value : shortHash(value); if (name && nameSource(value, investigation) === "known") return p.dim(roleName[role]) + " " + p[role](name) + " " + p.dim(hash); return p.dim(roleName[role]) + " " + p[role](hash) + (name ? " " + p.dim(name + " (ENS)") : ""); };
+  const address = (value: string) => { const role: Role = roleOf(value, investigation); const name = nameOf(value, investigation); const hash = twins.has(value) ? value : shortHash(value); if (name && nameSource(value, investigation) === "known") return p.dim(roleLabel(value, investigation)) + " " + p[role](name) + " " + p.dim(hash); return p.dim(roleLabel(value, investigation)) + " " + p[role](hash) + (name ? " " + p.dim(name + " (ENS)") : ""); };
   lines.push("", "  " + p.bold("ChainSightline") + "  " + p.dim("follow the line"), "");
-  lines.push("  " + p.bold(routeTitle(investigation.movements.length)));
+  lines.push("  " + p.bold(titleFor(investigation)));
   if (investigation.synthetic) wrap("An invented example, not real Ethereum data.", width + 3).forEach(line => lines.push("  " + p.warn(line)));
   else wrap("Ethereum mainnet, block " + investigation.blockNumber + ". Read from " + investigation.source + ".", width + 3).forEach(line => lines.push("  " + p.dim(line)));
+  if (options.explanation) {
+    const explanation = sanitize(options.explanation);
+    lines.push("");
+    lines.push("  " + p.line("✦") + "  " + p.bold("AI explanation"));
+    wrap(explanation.summary, width).forEach(line => lines.push("     " + line));
+    wrap("What it can’t tell you: " + explanation.uncertainty, width).forEach(line => lines.push("     " + p.dim(line)));
+    wrap("Written by " + explanation.model + " through OpenRouter" + (explanation.costUsd !== null ? ", costing $" + explanation.costUsd.toFixed(4) : "") + ". AI can be wrong: check the stops it cites.", width).forEach(line => lines.push("     " + p.dim(line)));
+  }
   lines.push("");
   lines.push("  " + p.line("◉") + "  " + p.dim("Starting point"));
-  onRail(investigation.kind === "address" ? "The address you asked about." : "The subject’s account.", p.bold);
+  onRail(startTitle(investigation), p.bold);
   lines.push("  " + rail + "  " + address(investigation.subject));
+  if (investigation.from) lines.push("  " + rail + "  " + p.dim("Compared with ") + address(investigation.from));
   if (investigation.transactionHash) lines.push("  " + rail + "  " + p.dim(etherscanTx(investigation.transactionHash)));
   else if (!investigation.synthetic) lines.push("  " + rail + "  " + p.dim(etherscanAddress(investigation.subject)));
   onRail(investigation.synthetic ? "Invented Ethereum-style data at block " + investigation.blockNumber + ". " + asSentence(investigation.coverage.summary) : investigation.explanation.summary, p.dim);
+  (investigation.checks ?? []).forEach((check, index) => {
+    const mark = check.status === "ok" ? p.line("✓") : check.status === "review" ? p.warn("!") : p.dim("?");
+    lines.push("  " + rail);
+    lines.push("  " + mark + "  " + p.dim("Check " + (index + 1) + ". " + (check.status === "ok" ? "Looks fine" : check.status === "review" ? "Look closer" : "Can’t tell")));
+    onRail(check.title + ".", check.status === "review" ? (text: string) => p.warn(p.bold(text)) : p.bold);
+    onRail(check.detail, p.dim);
+  });
   investigation.movements.forEach((movement, index) => {
     const notes = investigation.warnings.filter(item => item.evidenceId === movement.evidenceId);
     const warning = notes[0];
     const txHash = movement.transactionHash ?? investigation.transactionHash;
     const parts = describeMovement(movement, investigation);
     lines.push("  " + rail);
-    lines.push("  " + (warning ? p.warn("○") : p.line("○")) + "  " + p.dim("Stop " + (index + 1) + ". " + kindName[movement.kind]));
+    lines.push("  " + (warning ? p.warn("○") : p.line("○")) + "  " + p.dim("Stop " + (index + 1) + ". " + (movement.description.startsWith("Active") ? movement.description : kindName[movement.kind])));
     onRail(parts.before + parts.amount + (movement.usd ? " (" + movement.usd + (investigation.prices ? " " + investigation.prices.basis : "") + ")" : "") + parts.after, p.bold);
     lines.push("  " + rail + "  " + address(movement.from) + p.dim(" → ") + address(movement.to));
     for (const note of notes) {
@@ -95,21 +112,26 @@ const help = `ChainSightline ${version}
 Follow the evidence, one stop at a time.
 
 Usage
-  chainsightline trace <transaction or address>   Draw the route in your terminal
-  chainsightline sample                            Draw the invented example route
-  chainsightline web [--port 3000] [--no-open]     Open the website on this computer, no Docker needed
-  chainsightline setup                             Add your own free dRPC or Alchemy keys
-  chainsightline keys [remove drpc|alchemy]        See or remove your saved keys
+  chainsightline trace <transaction or address>    Draw the route in your terminal
+  chainsightline check <address> [--from <yours>]   Check an address before you send to it
+  chainsightline checkup <your address>             Find risky approvals and scam attempts in a wallet
+  chainsightline sample                             Draw the invented example route
+  chainsightline web [--port 3000] [--no-open]      Open the website on this computer, no Docker needed
+  chainsightline mcp [--print-config]               Run as a tool server for AI agents (MCP over stdio)
+  chainsightline setup                              Add your own dRPC, Alchemy or OpenRouter keys
+  chainsightline keys [remove <name>]               See or remove your saved keys
 
 Options
+  --explain        Add an AI explanation (needs an OpenRouter key)
   --evidence       Include full addresses, exact amounts and evidence references
-  --json           Print the route as JSON instead of drawing it
+  --json           Print the result as JSON instead of drawing it
   --no-color       Plain text output
   --rebuild        With web: rebuild the website before starting it
   -h, --help       Show this help
   -v, --version    Show the version
 
-Transactions work without any keys. Address history needs a free Alchemy key.`;
+Transactions work without any keys. Address history, checkups and comparing
+with your own history need a free Alchemy key.`;
 function subjectKind(value: string) {
   if (/^0x[0-9a-fA-F]{40}$/.test(value)) return "address";
   if (/^0x[0-9a-fA-F]{64}$/.test(value)) return "transaction";
@@ -150,7 +172,7 @@ async function web(args: string[], io: Io) {
   await exited;
   return 0;
 }
-export type Deps = { investigate: typeof investigate; resolveKeys: typeof resolveKeys; saveKey: typeof saveKey; checkKey: typeof checkKey; ask: (question: string, secret?: boolean) => Promise<string> };
+export type Deps = { investigate: typeof investigate; checkBeforeSend: typeof checkBeforeSend; checkup: typeof checkup; explain: typeof explainInvestigation; resolveKeys: typeof resolveKeys; saveKey: typeof saveKey; checkKey: typeof checkKey; ask: (question: string, secret?: boolean) => Promise<string> };
 async function ask(question: string, secret = false) {
   const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
   const writer = rl as unknown as { _writeToOutput?: (text: string) => void; output?: NodeJS.WritableStream };
@@ -160,10 +182,11 @@ async function ask(question: string, secret = false) {
   }
   try { return await rl.question(question); } finally { rl.close(); }
 }
-const defaultDeps = (): Deps => ({ investigate, resolveKeys, saveKey, checkKey, ask });
+const defaultDeps = (): Deps => ({ investigate, checkBeforeSend, checkup, explain: explainInvestigation, resolveKeys, saveKey, checkKey, ask });
 const signup: Record<KeyName, { purpose: string; steps: string }> = {
   drpc: { purpose: "faster, more reliable transaction lookups", steps: "Sign in at https://drpc.org/login, create a key, open its Settings tab and copy the key." },
-  alchemy: { purpose: "address history", steps: "Sign up at https://www.alchemy.com, create an app for Ethereum and copy its API key." },
+  alchemy: { purpose: "address history, wallet checkups and comparing payments with your history", steps: "Sign up at https://www.alchemy.com, create an app for Ethereum and copy its API key." },
+  openrouter: { purpose: "AI explanations of a route (Kimi K3.1 Pro by default)", steps: "Sign in at https://openrouter.ai/settings/keys, create a key, add a little credit and copy the key." },
 };
 const sourceText = (source: string | undefined) => source === "environment" ? "set in your .env file" : source === "saved" ? "saved" : "not set";
 async function setup(io: Io, deps: Deps) {
@@ -196,7 +219,7 @@ async function setup(io: Io, deps: Deps) {
 async function keys(args: string[], io: Io, deps: Deps) {
   if (args[0] === "remove") {
     const name = args[1] as KeyName;
-    if (!keyNames.includes(name)) { io.err("Say which key to remove: chainsightline keys remove drpc, or chainsightline keys remove alchemy."); return 2; }
+    if (!keyNames.includes(name)) { io.err("Say which key to remove: chainsightline keys remove drpc, alchemy or openrouter."); return 2; }
     const { sources } = await deps.resolveKeys();
     if (sources[name] === "environment") { io.err("That key comes from your .env file. Remove it there."); return 1; }
     await deps.saveKey(name, null);
@@ -205,16 +228,20 @@ async function keys(args: string[], io: Io, deps: Deps) {
   }
   const { sources } = await deps.resolveKeys();
   io.out("");
-  for (const name of keyNames) io.out("  " + keyLabel[name].padEnd(9) + sourceText(sources[name]).padEnd(24) + (sources[name] ? "" : name === "drpc" ? "free public access is used instead" : "needed for address history"));
+  for (const name of keyNames) io.out("  " + keyLabel[name].padEnd(9) + sourceText(sources[name]).padEnd(24) + (sources[name] ? "" : name === "drpc" ? "free public access is used instead" : name === "alchemy" ? "needed for address history and checkups" : "needed for AI explanations"));
   io.out("");
   io.out("  Keys file: " + keysFile());
   io.out("  Add or change keys with: chainsightline setup");
   io.out("");
   return 0;
 }
+function optionValue(argv: string[], name: string) {
+  const index = argv.indexOf(name);
+  return index >= 0 ? argv[index + 1] : undefined;
+}
 export async function main(argv: string[], io: Io = defaultIo(), deps: Deps = defaultDeps()) {
   const flags = new Set(argv.filter(arg => arg.startsWith("-")));
-  const positional = argv.filter((arg, index) => !arg.startsWith("-") && argv[index - 1] !== "--port");
+  const positional = argv.filter((arg, index) => !arg.startsWith("-") && argv[index - 1] !== "--port" && argv[index - 1] !== "--from");
   const color = io.color && !flags.has("--no-color");
   const [command, value] = positional;
   if (flags.has("-v") || flags.has("--version")) { io.out(version); return 0; }
@@ -222,21 +249,44 @@ export async function main(argv: string[], io: Io = defaultIo(), deps: Deps = de
   if (command === "web") return web(argv, io);
   if (command === "setup") return setup(io, deps);
   if (command === "keys") return keys(positional.slice(1), io, deps);
-  if (command !== "trace" && command !== "sample") { io.err("Unknown command \"" + command + "\". Run chainsightline --help."); return 2; }
-  let investigation: Investigation = sampleInvestigation;
-  if (command === "trace") {
-    if (!value) { io.err("Paste a transaction hash or address after trace, for example:\n  chainsightline trace 0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060"); return 2; }
-    const kind = subjectKind(value);
-    if (!kind) { io.err("That doesn’t look like an Ethereum transaction hash (0x and 64 hex characters) or address (0x and 40 hex characters)."); return 2; }
-    if (!flags.has("--json")) io.err("Reading Ethereum…");
-    try { investigation = await deps.investigate(kind, value); }
-    catch (error) {
-      io.err(error instanceof Error ? error.message : "Ethereum could not be read.");
-      if (error instanceof ChainError && error.kind === "needs-key") io.err("Run chainsightline setup to add one.");
-      return 1;
-    }
+  if (command === "mcp" && flags.has("--print-config")) {
+    const bin = fileURLToPath(new URL("../../../bin/chainsightline.mjs", import.meta.url));
+    io.out(JSON.stringify({ mcpServers: { chainsightline: { command: process.execPath, args: [bin, "mcp"] } } }, null, 2));
+    io.out("");
+    io.out("Paste this into your AI app's MCP settings, for example Claude Desktop's claude_desktop_config.json or Cursor's mcp.json.");
+    io.out("Claude Code: claude mcp add chainsightline -- " + process.execPath + " " + bin + " mcp");
+    return 0;
   }
-  if (flags.has("--json")) { io.out(JSON.stringify(investigation, null, 2)); return 0; }
-  io.out(renderRoute(investigation, { color, columns: io.columns, evidence: flags.has("--evidence") }));
+  if (command === "mcp") { const { serveMcp } = await import("./mcp"); await serveMcp(); return 0; }
+  if (!["trace", "sample", "check", "checkup"].includes(command)) { io.err("Unknown command \"" + command + "\". Run chainsightline --help."); return 2; }
+  let investigation: Investigation = sampleInvestigation;
+  const reading = () => { if (!flags.has("--json")) io.err("Reading Ethereum…"); };
+  try {
+    if (command === "trace") {
+      if (!value) { io.err("Paste a transaction hash or address after trace, for example:\n  chainsightline trace 0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060"); return 2; }
+      const kind = subjectKind(value);
+      if (!kind) { io.err("That doesn’t look like an Ethereum transaction hash (0x and 64 hex characters) or address (0x and 40 hex characters)."); return 2; }
+      reading();
+      investigation = await deps.investigate(kind, value);
+    } else if (command === "check" || command === "checkup") {
+      const from = optionValue(argv, "--from");
+      if (!value || subjectKind(value) !== "address") { io.err(command === "check" ? "Paste the address you’re about to pay after check, for example:\n  chainsightline check 0x… --from 0xYourAddress" : "Paste your wallet address after checkup, for example:\n  chainsightline checkup 0xYourAddress"); return 2; }
+      if (from !== undefined && subjectKind(from) !== "address") { io.err("--from needs your own Ethereum address: 0x and 40 hex characters."); return 2; }
+      reading();
+      investigation = command === "check" ? await deps.checkBeforeSend(value, from ?? null) : await deps.checkup(value);
+    }
+  } catch (error) {
+    io.err(error instanceof Error ? error.message : "Ethereum could not be read.");
+    if (error instanceof ChainError && error.kind === "needs-key") io.err("Run chainsightline setup to add one.");
+    return 1;
+  }
+  let explanation: Explanation | undefined;
+  if (flags.has("--explain")) {
+    if (!flags.has("--json")) io.err("Asking the AI to explain it. This can take up to a minute…");
+    try { explanation = await deps.explain(investigation); }
+    catch (error) { io.err((error instanceof Error ? error.message : "The AI explanation failed.") + (flags.has("--json") ? "" : " Showing the route without it.")); if (flags.has("--json")) return 1; }
+  }
+  if (flags.has("--json")) { io.out(JSON.stringify(explanation ? { ...investigation, aiExplanation: explanation } : investigation, null, 2)); return 0; }
+  io.out(renderRoute(investigation, { color, columns: io.columns, evidence: flags.has("--evidence"), explanation }));
   return 0;
 }

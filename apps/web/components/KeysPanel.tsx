@@ -1,11 +1,12 @@
 "use client";
 import { useId, useState } from "react";
 import { ExternalLink, LoaderCircle } from "lucide-react";
-export type KeyName = "drpc" | "alchemy";
-export type Settings = { primary: string; addressHistory: boolean; sources: Partial<Record<KeyName, "environment" | "saved">>; canSave: boolean; file: string | null };
+export type KeyName = "drpc" | "alchemy" | "openrouter";
+export type Settings = { primary: string; addressHistory: boolean; ai: boolean; sources: Partial<Record<KeyName, "environment" | "saved">>; canSave: boolean; file: string | null };
 const keys: { name: KeyName; label: string; purpose: string; href: string; steps: string }[] = [
   { name: "drpc", label: "dRPC", purpose: "Faster, more reliable transaction lookups.", href: "https://drpc.org/login", steps: "Create a key, open its Settings tab and copy the key." },
-  { name: "alchemy", label: "Alchemy", purpose: "Adds address history: the recent transfers in and out of any address.", href: "https://www.alchemy.com", steps: "Create an app for Ethereum and copy its API key." },
+  { name: "alchemy", label: "Alchemy", purpose: "Adds address history, wallet checkups, and comparing a payment with your own history.", href: "https://www.alchemy.com", steps: "Create an app for Ethereum and copy its API key." },
+  { name: "openrouter", label: "OpenRouter", purpose: "Adds AI explanations of a route, written by Kimi K3.1 Pro and citing each stop. Costs about one or two cents each.", href: "https://openrouter.ai/settings/keys", steps: "Create a key, add a little credit and copy the key." },
 ];
 function KeyRow({ entry, settings, onSaved }: { entry: (typeof keys)[number]; settings: Settings; onSaved: (settings: Settings) => void }) {
   const id = useId();
@@ -47,7 +48,7 @@ function KeyRow({ entry, settings, onSaved }: { entry: (typeof keys)[number]; se
 }
 export function KeysPanel({ settings, onSaved, id }: { settings: Settings; onSaved: (settings: Settings) => void; id: string }) {
   return <section className="keys" id={id} aria-label="Your keys">
-    <p className="keys-intro">ChainSightline works without keys, using dRPC’s free public access. Your own free keys make lookups faster and unlock address history. They stay on this computer and are only sent to the provider they belong to.</p>
+    <p className="keys-intro">ChainSightline works without keys, using dRPC’s free public access. Your own keys make lookups faster and unlock address history, wallet checkups and AI explanations. They stay on this computer and are only sent to the provider they belong to.</p>
     {keys.map(entry => <KeyRow key={entry.name} entry={entry} settings={settings} onSaved={onSaved} />)}
     {settings.file && <p className="keys-file">Keys you save here are kept in <span className="hash">{settings.file}</span>.</p>}
   </section>;

@@ -2,18 +2,19 @@ import { existsSync, readFileSync } from "node:fs";
 import { chmod, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-export type KeyName = "drpc" | "alchemy";
+export type KeyName = "drpc" | "alchemy" | "openrouter";
 export type Keys = Partial<Record<KeyName, string>>;
 export type KeySource = "environment" | "saved";
-export const keyNames: KeyName[] = ["drpc", "alchemy"];
-export const keyLabel: Record<KeyName, string> = { drpc: "dRPC", alchemy: "Alchemy" };
-const envNames: Record<KeyName, string[]> = { drpc: ["DRPC_KEY", "DRPC_API_KEY"], alchemy: ["ALCHEMY_API_KEY", "ALCHEMY_KEY"] };
+export const keyNames: KeyName[] = ["drpc", "alchemy", "openrouter"];
+export const keyLabel: Record<KeyName, string> = { drpc: "dRPC", alchemy: "Alchemy", openrouter: "OpenRouter" };
+const envNames: Record<KeyName, string[]> = { drpc: ["DRPC_KEY", "DRPC_API_KEY"], alchemy: ["ALCHEMY_API_KEY", "ALCHEMY_KEY"], openrouter: ["OPENROUTER_API_KEY"] };
 export const keyPattern = /^[A-Za-z0-9_-]{8,200}$/;
 export function extractKey(name: KeyName, input: string) {
   const text = input.trim().replace(/^["']|["']$/g, "");
   if (keyPattern.test(text)) return text;
   let url: URL;
   try { url = new URL(text); } catch { return null; }
+  if (name === "openrouter") return null;
   const candidates = name === "drpc" ? [url.searchParams.get("dkey"), url.pathname.split("/").filter(Boolean).pop()] : [url.pathname.match(/\/v2\/([^/]+)/)?.[1] ?? null];
   for (const candidate of candidates) if (candidate && keyPattern.test(candidate)) return candidate;
   return null;

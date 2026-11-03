@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {AnalysisError,analysisJsonSchema,analysisSchema,evidencePackageSchema,type AnalysisProvider,type AnalysisResult,type EvidencePackage} from "./analysis.js";
+import {AnalysisError,analysisJsonSchema,analysisSchema,evidencePackageSchema,type AnalysisProvider,type AnalysisResult,type EvidencePackage} from "./analysis";
 const responseSchema = z.object({
   id: z.string().optional(),
   model: z.string(),

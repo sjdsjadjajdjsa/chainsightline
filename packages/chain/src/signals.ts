@@ -15,7 +15,7 @@ export function describeAddress(address: string, names: Names, full = false) {
   if (!entry) return base;
   return entry.source === "known" ? entry.name + " (" + base + ")" : base + " (ENS name " + entry.name + ", chosen by its owner)";
 }
-function isDust(movement: Movement) {
+export function isDust(movement: Movement) {
   const raw = rawValue(movement);
   if (raw === 0n) return true;
   if (movement.usd === "less than $0.01") return true;
@@ -56,7 +56,7 @@ export async function detectSignals(investigation: Investigation, rpc: Rpc | nul
     else if (symbol === "eth" && movement.assetAddress) add(movement, "Fake ETH token", "Real ETH is not a token contract. A token that calls itself ETH is almost always used to trick people.");
     else if (spamWords.test(movement.asset)) add(movement, "Spam token", "Its name advertises a website or reward. Tokens like this are airdropped to lure people to scam sites. Don’t visit it or interact with the token.");
   }
-  if (investigation.kind === "address" && rpc) {
+  if ((investigation.kind === "address" || investigation.kind === "checkup") && rpc) {
     const code = await rpc.call<string>("eth_getCode", [investigation.subject, "latest"]).catch(() => null);
     const personal = code === "0x" || (typeof code === "string" && code.toLowerCase().startsWith("0xef0100") && code.length === 48);
     const outgoing = personal ? investigation.movements.filter(movement => movement.description === "Token transfer" && movement.from === investigation.subject && movement.transactionHash && !movement.usd) : [];

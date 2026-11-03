@@ -20,6 +20,7 @@
     "test:chain:live": "node --import tsx scripts/drpc-smoke.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
     "lucide-react": "1.66.0",
     "next": "16.4.4",
     "react": "19.3.1",

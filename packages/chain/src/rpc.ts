@@ -12,7 +12,7 @@ export function providersFor(keys: Keys, includePublic = true): Provider[] {
   if (includePublic) list.push({ name: "public", label: "dRPC free public access", url: "https://eth.drpc.org", headers: {}, traces: true });
   return list;
 }
-export type CallOptions = { traces?: boolean; only?: ProviderName };
+export type CallOptions = { traces?: boolean; only?: ProviderName; except?: ProviderName };
 export type Rpc = {
   providers: Provider[];
   used: Set<string>;
@@ -26,7 +26,7 @@ export function createRpc(providers: Provider[], fetcher: typeof fetch = fetch, 
     providers,
     used,
     async call<T>(method: string, params: unknown[], options: CallOptions = {}) {
-      const candidates = providers.filter(provider => (!options.only || provider.name === options.only) && (!options.traces || provider.traces));
+      const candidates = providers.filter(provider => (!options.only || provider.name === options.only) && provider.name !== options.except && (!options.traces || provider.traces));
       let last = "no data provider is configured";
       for (const provider of candidates) {
         try {
@@ -49,6 +49,12 @@ export function createRpc(providers: Provider[], fetcher: typeof fetch = fetch, 
   };
 }
 export async function checkKey(name: KeyName, value: string, fetcher: typeof fetch = fetch) {
+  if (name === "openrouter") {
+    try {
+      const response = await fetcher("https://openrouter.ai/api/v1/key", { headers: { Authorization: "Bearer " + value }, signal: AbortSignal.timeout(15000) });
+      return response.ok ? { ok: true as const } : { ok: false as const, message: "That key didn’t work. OpenRouter answered with status " + response.status + "." };
+    } catch { return { ok: false as const, message: "That key couldn’t be checked: OpenRouter could not be reached." }; }
+  }
   const rpc = createRpc(providersFor({ [name]: value }, false), fetcher, 15000);
   try {
     const block = await rpc.call<string>("eth_blockNumber", [], { only: name });

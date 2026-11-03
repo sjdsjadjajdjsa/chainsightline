@@ -3,8 +3,8 @@ import { shortHash } from "../../core/src/route";
 import { blockLabel, cleanSymbol, formatUnits, toBigInt } from "./format";
 import { ChainError, type Rpc } from "./rpc";
 type Movement = Investigation["movements"][number];
-type Transfer = { uniqueId?: string; blockNum: string; hash: string; from: string; to: string | null; value: number | null; asset: string | null; category: string; tokenId?: string | null; erc1155Metadata?: { tokenId: string; value: string }[] | null; rawContract?: { value: string | null; address: string | null; decimal: string | null } };
-type RawBlock = { hash: string; number: string; timestamp: string };
+export type Transfer = { uniqueId?: string; blockNum: string; hash: string; from: string; to: string | null; value: number | null; asset: string | null; category: string; tokenId?: string | null; erc1155Metadata?: { tokenId: string; value: string }[] | null; rawContract?: { value: string | null; address: string | null; decimal: string | null } };
+export type RawBlock = { hash: string; number: string; timestamp: string };
 export const ADDRESS_LIMIT = 20;
 function amountOf(transfer: Transfer): { amount: string; rawAmount?: string; decimals?: number } {
   if (transfer.category === "erc721") return { amount: "#" + toBigInt(transfer.tokenId ?? undefined).toString() };
@@ -13,26 +13,28 @@ function amountOf(transfer: Transfer): { amount: string; rawAmount?: string; dec
   if (raw?.value && raw.decimal) { const value = toBigInt(raw.value); const decimals = Number(toBigInt(raw.decimal)); return decimals <= 36 ? { amount: formatUnits(value, decimals), rawAmount: value.toString() + " base units", decimals } : { amount: value.toLocaleString("en-US") + " units of", rawAmount: value.toString() + " base units" }; }
   return { amount: transfer.value === null ? "an unknown amount of" : String(transfer.value) };
 }
+export function transferToMovement(transfer: Transfer, index: number, prefix = "transfer-"): Movement {
+  const native = transfer.category === "external" || transfer.category === "internal";
+  const nft = transfer.category === "erc721" || transfer.category === "erc1155";
+  const contract = transfer.rawContract?.address;
+  const shown = amountOf(transfer);
+  const movement: Movement = { id: prefix + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? (contract ? (nft ? "NFT from " : "tokens from ") + shortHash(contract) : nft ? "NFT" : "tokens"), amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : nft ? "NFT transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", " + (transfer.uniqueId ?? transfer.hash).replace(transfer.hash, "transaction " + transfer.hash.slice(0, 10) + "…").replace(/:/g, " ").replace(/\s+/g, " ").trim() + (transfer.uniqueId ? "" : " " + index), transactionHash: transfer.hash.toLowerCase() };
+  if (shown.rawAmount) movement.rawAmount = shown.rawAmount;
+  if (shown.decimals !== undefined) movement.decimals = shown.decimals;
+  if (contract && /^0x[0-9a-fA-F]{40}$/.test(contract)) movement.assetAddress = contract.toLowerCase();
+  return movement;
+}
+export const historyQuery = (subject: string, direction: "fromAddress" | "toAddress", count: number, category = ["external", "internal", "erc20", "erc721", "erc1155"]) => [{ fromBlock: "0x0", toBlock: "latest", [direction]: subject, category, withMetadata: false, excludeZeroValue: true, maxCount: "0x" + count.toString(16), order: "desc" }];
 export async function investigateAddress(address: string, rpc: Rpc): Promise<Investigation> {
   if (!rpc.providers.some(provider => provider.name === "alchemy")) throw new ChainError("needs-key", "Address history needs a free Alchemy key. Transactions work without one.");
   const subject = address.toLowerCase();
-  const query = (direction: "fromAddress" | "toAddress") => rpc.call<{ transfers: Transfer[] }>("alchemy_getAssetTransfers", [{ fromBlock: "0x0", toBlock: "latest", [direction]: subject, category: ["external", "internal", "erc20", "erc721", "erc1155"], withMetadata: false, excludeZeroValue: true, maxCount: "0x" + ADDRESS_LIMIT.toString(16), order: "desc" }], { only: "alchemy" });
+  const query = (direction: "fromAddress" | "toAddress") => rpc.call<{ transfers: Transfer[] }>("alchemy_getAssetTransfers", historyQuery(subject, direction, ADDRESS_LIMIT), { only: "alchemy" });
   const [sent, received, head] = await Promise.all([query("fromAddress"), query("toAddress"), rpc.call<RawBlock>("eth_getBlockByNumber", ["latest", false], { only: "alchemy" })]);
   const seen = new Set<string>();
   const transfers = [...(sent.transfers ?? []), ...(received.transfers ?? [])].filter(transfer => { const id = transfer.uniqueId ?? transfer.hash + transfer.category + transfer.from + transfer.to; if (seen.has(id) || !transfer.to) return false; seen.add(id); return true; });
   transfers.sort((a, b) => Number(toBigInt(b.blockNum) - toBigInt(a.blockNum)));
   const recent = transfers.slice(0, ADDRESS_LIMIT).reverse();
-  const movements: Movement[] = recent.map((transfer, index) => {
-    const native = transfer.category === "external" || transfer.category === "internal";
-    const nft = transfer.category === "erc721" || transfer.category === "erc1155";
-    const contract = transfer.rawContract?.address;
-    const shown = amountOf(transfer);
-    const movement: Movement = { id: "transfer-" + index, kind: native ? "native-transfer" : "token-transfer", from: transfer.from.toLowerCase(), to: transfer.to!.toLowerCase(), asset: native ? "ETH" : cleanSymbol(transfer.asset) ?? (contract ? (nft ? "NFT from " : "tokens from ") + shortHash(contract) : nft ? "NFT" : "tokens"), amount: shown.amount, description: transfer.category === "internal" ? "ETH moved inside a transaction" : native ? "ETH transfer" : nft ? "NFT transfer" : "Token transfer", evidenceId: "block " + blockLabel(toBigInt(transfer.blockNum)) + ", " + (transfer.uniqueId ?? transfer.hash).replace(transfer.hash, "transaction " + transfer.hash.slice(0, 10) + "…").replace(/:/g, " ").replace(/\s+/g, " ").trim() + (transfer.uniqueId ? "" : " " + index), transactionHash: transfer.hash.toLowerCase() };
-    if (shown.rawAmount) movement.rawAmount = shown.rawAmount;
-    if (shown.decimals !== undefined) movement.decimals = shown.decimals;
-    if (contract && /^0x[0-9a-fA-F]{40}$/.test(contract)) movement.assetAddress = contract.toLowerCase();
-    return movement;
-  });
+  const movements: Movement[] = recent.map((transfer, index) => transferToMovement(transfer, index));
   const limitations = [
     "Showing the " + (movements.length === ADDRESS_LIMIT ? ADDRESS_LIMIT + " most recent" : movements.length) + " transfers in and out of this address; older history is not included",
     "Approvals and other contract activity are not part of address history",
