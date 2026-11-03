@@ -26,14 +26,17 @@ p{position:absolute;left:162px;top:160px;font-family:"Source Serif 4",serif;font
 </body></html>`;
 const { renderRoute } = await tsImport("../../packages/cli/src/main.ts", import.meta.url);
 const { sampleInvestigation } = await tsImport("../../packages/core/src/sample.ts", import.meta.url);
-const ansi = renderRoute(sampleInvestigation, { color: true, columns: 84, evidence: false, entered: "0x" + "ab".repeat(20) });
+const { investigate } = await tsImport("../../packages/chain/src/investigate.ts", import.meta.url);
+const liveTx = process.env.CHAINSIGHTLINE_LIVE_TX;
+const routeData = liveTx ? await investigate("transaction", liveTx) : sampleInvestigation;
+const ansi = renderRoute(routeData, { color: true, columns: 84, evidence: false });
 const colors = { "36": "#69c3aa", "1;36": "#69c3aa;font-weight:700", "1;35": "#c2a1e8;font-weight:700", "1;34": "#8eb6ec;font-weight:700", "33": "#eaa96a", "2": "#8b9690", "1": "#e6ebe5;font-weight:700" };
 const escape = text => text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const html = escape(ansi).replace(/\u001b\[([\d;]+)m([\s\S]*?)\u001b\[0m/g, (_, code, text) => '<span style="color:' + (colors[code] ?? "inherit") + '">' + text + "</span>");
 const terminal = `<!doctype html><html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=block"><style>
 *{margin:0;box-sizing:border-box}body{background:#f4f0e6;padding:28px;width:960px}.window{background:#121a1b;border-radius:12px;overflow:hidden;box-shadow:0 18px 40px #1d292833}.bar{height:36px;display:flex;align-items:center;gap:8px;padding:0 16px;background:#1b2526}.bar i{width:12px;height:12px;border-radius:50%;background:#3a4846}.bar span{margin-left:12px;font:13px "JetBrains Mono",monospace;color:#8b9690}
 pre{padding:8px 24px 24px;font:15px/1.55 "JetBrains Mono",monospace;color:#e6ebe5;white-space:pre}
-</style></head><body><div class="window"><div class="bar"><i></i><i></i><i></i><span>chainsightline trace 0xabab…abab</span></div><pre>${html}</pre></div></body></html>`;
+</style></head><body><div class="window"><div class="bar"><i></i><i></i><i></i><span>chainsightline ${liveTx ? "trace " + liveTx.slice(0, 6) + "…" + liveTx.slice(-4) : "sample"}</span></div><pre>${html}</pre></div></body></html>`;
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 420 }, deviceScaleFactor: 2 });
 await page.setContent(banner, { waitUntil: "networkidle" });
@@ -47,6 +50,7 @@ for (const theme of ["light", "dark"]) {
   const site = await browser.newPage({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2 });
   await site.addInitScript(value => { sessionStorage.setItem("chainsightline-intro", "1"); localStorage.setItem("chainsightline-theme", value); }, theme);
   await site.goto(base, { waitUntil: "networkidle" });
+  if (liveTx) { await site.getByRole("textbox").fill(liveTx); await site.getByRole("button", { name: "Follow the line" }).click(); await site.locator(".stamp", { hasText: "Ethereum mainnet" }).waitFor({ timeout: 60000 }); await site.waitForTimeout(600); }
   await site.locator(".route-header").evaluate(element => scrollTo(0, element.getBoundingClientRect().top + scrollY - 24));
   await site.screenshot({ path: assets + "route-" + theme + ".png" });
 }

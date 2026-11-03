@@ -24,9 +24,12 @@ for (const width of [390, 1440, 3440]) {
   await noOverflow(page, "dark " + width);
   await page.getByRole("button", { name: "Use light theme" }).click();
   if (width === 1440) {
-    await page.getByRole("button", { name: "Use the sample address" }).click();
-    await page.getByRole("button", { name: "Open the sample" }).click();
-    await page.getByText(/The route below is still the invented example/).waitFor();
+    await page.getByRole("button", { name: "Your keys" }).click();
+    await page.getByRole("region", { name: "Your keys" }).waitFor();
+    if (await page.getByRole("link", { name: /Get a free dRPC key/ }).getAttribute("href") !== "https://drpc.org/login") throw new Error("dRPC sign-up link missing");
+    await page.getByRole("button", { name: "Hide your keys" }).click();
+    await page.getByRole("button", { name: "See an invented example" }).click();
+    await page.locator(".stamp", { hasText: "An invented example" }).waitFor();
     await page.getByRole("button", { name: "Show the evidence" }).nth(2).click();
     const hide = page.getByRole("button", { name: "Hide the evidence" });
     if (await hide.getAttribute("aria-expanded") !== "true") throw new Error("Evidence did not expand");
@@ -62,12 +65,23 @@ if (await reduced.evaluate(() => document.documentElement.dataset.theme) !== "da
 console.log("Intro, reduced motion and theme memory checks passed");
 const invalid = await browser.newPage();
 await invalid.goto(base, { waitUntil: "networkidle" });
-await invalid.getByRole("button", { name: "Open the sample" }).click();
-await invalid.getByText("Enter an Ethereum address or transaction hash.").waitFor();
+await invalid.getByRole("button", { name: "Follow the line" }).click();
+await invalid.getByText("Paste an Ethereum transaction hash.").waitFor();
 await invalid.getByRole("textbox").fill("not-an-address");
-await invalid.getByRole("button", { name: "Open the sample" }).click();
+await invalid.getByRole("button", { name: "Follow the line" }).click();
 await invalid.getByText("Enter a valid Ethereum address or transaction hash").waitFor();
 const health = await invalid.request.get(base + "/api/health");
 if (!health.ok()) throw new Error("Health check failed");
+if (process.env.CHAINSIGHTLINE_LIVE_TX) {
+  const live = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await live.addInitScript(() => sessionStorage.setItem("chainsightline-intro", "1"));
+  await live.goto(base, { waitUntil: "networkidle" });
+  await live.getByRole("textbox").fill(process.env.CHAINSIGHTLINE_LIVE_TX);
+  await live.getByRole("button", { name: "Follow the line" }).click();
+  await live.locator(".stamp", { hasText: "Ethereum mainnet, block" }).waitFor({ timeout: 60000 });
+  await live.waitForTimeout(800);
+  await live.screenshot({ path: out + "live-1440.png", fullPage: true });
+  console.log("Live transaction rendered: " + (await live.locator(".trail > li").count() - 2) + " stops");
+}
 console.log("Browser interaction, validation and health checks passed");
 await browser.close();

@@ -7,7 +7,7 @@
 **Follow the line.** ChainSightline turns blockchain activity into one route you read from top to bottom: what moved, between whom, which warnings deserve a look, and exactly where the evidence ends.
 
 > [!IMPORTANT]
-> **Early preview.** The website, terminal command and AI provider adapter work, but ChainSightline is **not connected to Ethereum yet**. Every search shows the same clearly labelled invented example.
+> **Early preview.** ChainSightline reads real Ethereum mainnet transactions with no setup and no keys. Address history needs a free Alchemy key. Detection rules are basic so far: a warning is a reason to look closer, never a verdict.
 
 <p align="center">
   <img src="docs/assets/route-light.png" alt="A ChainSightline route in the light theme: a starting point and stops connected by one line" width="49%" />
@@ -27,10 +27,11 @@ npm install
 ### In your terminal
 
 ```sh
-npm run cli -- sample                 # draw the example route
-npm run cli -- trace 0xYourAddress    # paste any address or transaction hash
-npm run cli -- sample --evidence      # include full addresses for every stop
-npm run cli -- sample --json          # machine-readable output
+npm run cli -- trace 0xTransactionHash   # follow a real transaction, no key needed
+npm run cli -- trace 0xAddress           # recent transfers in and out (needs an Alchemy key)
+npm run cli -- trace 0x… --evidence      # add full addresses and exact amounts
+npm run cli -- trace 0x… --json          # machine-readable output
+npm run cli -- sample                    # the invented example route
 ```
 
 Run `npm link` once to use it as `chainsightline` from anywhere, for example `chainsightline trace 0x…`.
@@ -56,17 +57,34 @@ npm stop             # stop without deleting data
 
 The container is read-only, runs as a non-root user and is reachable only from your own computer.
 
+## Your own keys (optional)
+
+ChainSightline works out of the box using dRPC's free public access. Free keys of your own make it faster and unlock more:
+
+| Key | What it adds | Get one |
+| --- | --- | --- |
+| dRPC | Faster, more reliable transaction lookups | [drpc.org](https://drpc.org/login): create a key, open its Settings tab, copy the key |
+| Alchemy | Address history: recent transfers in and out of any address | [alchemy.com](https://www.alchemy.com): create an app for Ethereum, copy its API key |
+
+Add them whichever way is easiest:
+
+- **In the website:** click **Your keys** under the search box and paste. Each key is checked before it is saved.
+- **In the terminal:** run `chainsightline setup` (or `npm run cli -- setup`). `chainsightline keys` shows what is set.
+- **In a file:** put `DRPC_KEY=…` and `ALCHEMY_API_KEY=…` in a `.env` file in the project folder. Docker picks these up too.
+
+You can paste either the key itself or the whole link the provider shows you. Keys stay on your computer (`~/.config/chainsightline/keys.json`, readable only by you), are only ever sent to the provider they belong to, and never appear in output or error messages.
+
 ## How it works
 
 ```mermaid
 flowchart LR
-    A["Address or transaction"] --> B["Collect evidence<br/>(planned)"]
+    A["Address or transaction"] --> B["Collect evidence<br/>dRPC or Alchemy"]
     B --> C["Normalise into stops"]
     C --> D["Explainable warnings"]
     D --> E["The route<br/>web or terminal"]
     E --> F["Optional cited<br/>AI explanation"]
 
-    style B fill:#f4f0e6,stroke:#9a4f17,color:#1d2928,stroke-dasharray:4 3
+    style B fill:#e3efe9,stroke:#21685c,color:#1d2928
     style A fill:#e3efe9,stroke:#21685c,color:#1d2928
     style C fill:#e3efe9,stroke:#21685c,color:#1d2928
     style D fill:#e3efe9,stroke:#21685c,color:#1d2928
@@ -75,11 +93,11 @@ flowchart LR
 ```
 
 1. You paste an address or transaction hash. It is checked before anything else happens.
-2. **Today** the server returns the invented example. **Planned:** a worker fetches receipts, token transfers and call traces from an Ethereum provider.
-3. Each movement becomes a stop with a plain sentence such as "0.42 ETH left the subject", plus the two addresses colour-coded and labelled by role.
-4. Rules attach warnings to the stop they concern, for example an unlimited token approval. A warning is a reason to look closer, never a verdict.
-5. The route ends with what is still unknown, so missing data never reads as safety.
-6. Optionally, an AI model (Kimi by default, or any compatible OpenRouter model) explains the route. Its answer must cite the evidence or it is rejected.
+2. ChainSightline asks a data provider for the transaction, its receipt, its block and its call trace. Your own key is used first; if it fails, dRPC's free public access takes over. For an address, Alchemy returns its 20 most recent transfers.
+3. Each movement becomes a stop with a plain sentence such as "0.42 ETH left the subject", plus the two addresses colour-coded and labelled by role. ETH sent with the transaction, ETH moved between contracts inside it, token and NFT transfers, and approvals are all included. Token names are read from the token contracts.
+4. Rules attach warnings to the stop they concern. Today that means unlimited token approvals and collection-wide NFT approvals. A warning is a reason to look closer, never a verdict.
+5. The route ends with what is still unknown, such as a missing call trace, hidden events, or movements beyond the first 40, so missing data never reads as safety.
+6. Planned: an AI model (Kimi by default, or any compatible OpenRouter model) explains the route. Its answer must cite the evidence or it is rejected. The adapter is built and tested but not yet wired into the app.
 
 The website and the terminal share the same evidence format and wording, so both always tell the same story.
 
@@ -121,10 +139,11 @@ See the [full architecture](docs/plans/2026-11-02-blockchain-investigation-tool-
 | Architecture and repository | Reviewed design, private repository and project guidance | Complete |
 | AI provider contract | Model-neutral evidence schema, OpenRouter adapter and offline tests | Complete for the preview |
 | Sightline website | One-line route design, intro, light and dark themes, mobile layout | Preview working |
-| Terminal command | `chainsightline trace`, `sample` and `web` without Docker | Preview working |
-| Live Ethereum investigation | Provider-backed transaction and bounded address history | Next |
+| Terminal command | `chainsightline trace`, `sample`, `web`, `setup` and `keys` without Docker | Preview working |
+| Live Ethereum investigation | Real transactions without keys; recent address history with Alchemy | Preview working |
+| Easy keys | Paste keys in the website or terminal, checked before saving | Preview working |
 | Branching routes | One address sending to several, shown on the line | Design needed |
-| Signals | Versioned, explainable rules with labelled test cases | Not started |
+| Signals | Versioned, explainable rules with labelled test cases | Approval rules only |
 | Cited AI analysis in the app | Configurable model explanations over frozen evidence | Adapter tested |
 | Private preview | Database, jobs, security, recovery and cost checks | Not started |
 
@@ -138,6 +157,7 @@ npm test               # unit tests for the evidence format, route wording, CLI 
 npm run typecheck
 npm run test:browser   # with the site running: phone, laptop and ultrawide checks in both themes
 npm run test:chain:live  # with DRPC_KEY in a local .env file: one real receipt and trace from Ethereum
+CHAINSIGHTLINE_LIVE_TX=0x… npm run test:browser   # also render a real transaction in the browser
 ```
 
 Kimi K3.1 Pro is the primary development model and the default product model. OpenRouter provides the provider-neutral transport; Kimi, OpenAI and Google models passed a small structured-output compatibility test. There is no silent fallback and privacy settings are never weakened automatically. See [AI provider configuration](docs/ai-providers.md) and the [smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md). Real environment files are ignored by Git.
