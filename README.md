@@ -137,6 +137,7 @@ npm run dev            # live-reloading website
 npm test               # unit tests for the evidence format, route wording, CLI and AI adapter
 npm run typecheck
 npm run test:browser   # with the site running: phone, laptop and ultrawide checks in both themes
+npm run test:chain:live  # with DRPC_KEY in a local .env file: one real receipt and trace from Ethereum
 ```
 
 Kimi K3.1 Pro is the primary development model and the default product model. OpenRouter provides the provider-neutral transport; Kimi, OpenAI and Google models passed a small structured-output compatibility test. There is no silent fallback and privacy settings are never weakened automatically. See [AI provider configuration](docs/ai-providers.md) and the [smoke report](docs/reviews/2026-11-02-ai-provider-smoke.md). Real environment files are ignored by Git.

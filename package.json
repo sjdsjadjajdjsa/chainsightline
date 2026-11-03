@@ -16,7 +16,8 @@
     "test": "node --import tsx --test packages/*/test/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:browser": "node design_system/tools/capture.mjs",
-    "test:ai:live": "node --import tsx scripts/openrouter-smoke.ts"
+    "test:ai:live": "node --import tsx scripts/openrouter-smoke.ts",
+    "test:chain:live": "node --import tsx scripts/drpc-smoke.ts"
   },
   "dependencies": {
     "lucide-react": "1.66.0",
