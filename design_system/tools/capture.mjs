@@ -51,6 +51,8 @@ await intro.waitForTimeout(1400);
 if (await overlay.evaluate(element => getComputedStyle(element).visibility) !== "hidden") throw new Error("Intro did not finish");
 await intro.reload();
 if (await overlay.evaluate(element => getComputedStyle(element).display) !== "none") throw new Error("Intro replayed in the same session");
+await intro.goto(base + "/?intro");
+if (await overlay.evaluate(element => getComputedStyle(element).display) === "none") throw new Error("?intro did not replay the intro");
 const reduced = await browser.newPage({ reducedMotion: "reduce" });
 await reduced.goto(base);
 if (await reduced.locator(".intro-overlay").evaluate(element => getComputedStyle(element).display) !== "none") throw new Error("Intro shown with reduced motion");
